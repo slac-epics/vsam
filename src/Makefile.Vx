@@ -1,0 +1,69 @@
+#==============================================================
+#
+#  Abs:  Makefile to build IOC components 
+#      
+#  Name: Makefile.Vx 
+#
+#  Side:  The user MUST also include all of
+#         the objects for the required records
+#         which are as follows before vsamLib
+#         is loaded:
+#             aiRecord
+#             biRecord
+#             boRecord
+#             vmeCardRecord
+#
+#  Facility: LBL
+#
+#  Auth: 18-Feb-1999, Author's Name  (USERNAME):
+#  Rev:  dd-mmm-yyyy, First Lastname (USERNAME)
+#
+#--------------------------------------------------------------
+#  Mod:
+#       27-Mar-2002, D. Kotturi (DAYLE)
+#         Added VSAMUtils.c
+#       18-Feb-1999, K. Luchini (LUCHINI)
+#         build babar VSAM using EPICS R3.13.1
+#         and removed dependence of module_types.h
+#
+#==============================================================
+#
+TOP = ../../../..
+include $(TOP)/config/CONFIG_APP
+#----------------------------------------
+#  ADD MACRO DEFINITIONS AFTER THIS LINE
+#
+#USR_CFLAGS += -g -DDEBUG
+USR_CFLAGS += -g 
+
+#  BiRa VME-7305 (VSAM) Driver Support
+SRCS.c += ../drvVSAM.c
+
+#  BiRa VME-7305 (VSAM) Device Support
+SRCS.c += ../devAiVSAM.c
+SRCS.c += ../devBiVSAM.c
+SRCS.c += ../devBoVSAM.c
+SRCS.c += ../devCardVSAM.c
+
+#  Test/Diagnostics Utilities
+SRCS.c += ../VSAMUtils.c
+
+# Install objects and executables
+#PROD = $(SRCS.c:../%.c=%.o)
+PROD += VSAMUtils.o
+
+LIBOBJS += drvVSAM.o
+LIBOBJS += devAiVSAM.o
+LIBOBJS += devBiVSAM.o
+LIBOBJS += devBoVSAM.o
+LIBOBJS += devCardVSAM.o
+LIBOBJS += VSAMUtils.o
+
+LIBNAME = vsamLib
+
+include $(TOP)/config/RULES.Vx
+#
+#----------------------------------------
+#  ADD RULES AFTER THIS LINE
+
+
