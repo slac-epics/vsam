@@ -1,0 +1,73 @@
+#==============================================================
+#
+# Abs:   Database template for VSAM 32-Channel ADC
+#
+# Name:   vsam.template
+#
+# Desc:  EPICS database tempate file for VSAM module
+#        and channel specific information. In addition,
+#        channels have been addded for the conversion of
+#        VSAM data from Volts to the desired engineering units
+#        using a non-linear conversion.
+#
+# Side:  TRS1 or TRS2 (Test Accelerator RF Station 1 or 2)
+#
+# Facility: SLAC/NLCTA RF  fast data acquistion
+#
+# Auth:  01-Aug-2001  Kristi Luchini (LUCHIN)
+#==============================================================
+# Mod:
+#        01-Aug-2001 K. Luchini (LUCHINI):
+#           added slow_vsam_module.db,slow_vsam.db            
+#
+#==============================================================
+#
+# VSAM module 
+#
+file slowApp/Db/slow_vsam_module.db
+{                                                                 
+#          STN     Card  
+  pattern { S    , M }     
+  	  { TR00 , 0 }          
+}
+#
+# VSAM Channel Data
+#
+file slowApp/Db/slow_vsam.db
+{
+#	   STN  COMP   Quantity      Description      Card Chan  HOPR LOPR  HIHI HIGH  LOLO  LOW  EGU   PREC  SNAM    HYST  ADEL  MDEL
+  pattern { S  , C    ,    Q       ,      D           , M , CH , H  , L   , HH , HI ,  LL ,  LO , E   ,  P  , R     , HY ,  AD  ,  MD  }
+   	  { TRS1, RF  ,DRIVE1:ATTN ,"TRS1 Atn-1"      , 0 ,  0 , 70 , -70 , 70 , 70 , -70 , -70 , Db  ,  3  , DBpoly, 1  , .001 , .001 }
+   	  { TRS2, RF  ,DRIVE1:ATTN ,"TRS2 Atn-2"      , 0 ,  1 , 70 , -70 , 70 , 70 , -70 , -70 , Db  ,  3  , DBpoly, 1  , .001 , .001 }
+   	  { TRS1, RF  ,PULSE:WIDTH ,"TRS1 Width"      , 0 ,  2 , 250, 0   , 250, 250, -250, -250, nsec,  1  , DBpoly, 1  , .1   , .1   }
+   	  { TRS2, RF  ,PULSE:WIDTH ,"TRS2 Width"      , 0 ,  3 , 250, 0   , 250, 250, -250, -250, nsec,  1  , DBpoly, 1  , .1   , .1   }
+   	  { TRS1, KLY1,SYS1:VACM   ,"Sys 1 Vacuum"    , 0 ,  4 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS1, KLY1,SYS2:VACM   ,"Sys 2 Vacuum"    , 0 ,  5 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS1, KLY1,SYS3:VACM   ,"Sys 3 Vacuum"    , 0 ,  6 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS1, KLY1,SYS4:VACM   ,"Sys 4 Vacuum"    , 0 ,  7 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS1, KLY2,SYS1:VACM   ,"Sys 1 Vacuum"    , 0 ,  8 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS1, KLY2,SYS2:VACM   ,"Sys 2 Vacuum"    , 0 ,  9 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS1, KLY2,SYS3:VACM   ,"Sys 3 Vacuum"    , 0 , 10 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS1, KLY2,SYS4:VACM   ,"Sys 4 Vacuum"    , 0 , 11 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS2, KLY1,SYS1:VACM   ,"Sys 1 Vacuum"    , 0 , 12 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS2, KLY1,SYS2:VACM   ,"Sys 2 Vacuum"    , 0 , 13 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS2, KLY1,SYS3:VACM   ,"Sys 3 Vacuum"    , 0 , 14 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS2, KLY1,SYS4:VACM   ,"Sys 4 Vacuum"    , 0 , 15 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS2, KLY2,SYS1:VACM   ,"Sys 1 Vacuum"    , 0 , 16 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS2, KLY2,SYS2:VACM   ,"Sys 2 Vacuum"    , 0 , 17 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS2, KLY2,SYS3:VACM   ,"Sys 3 Vacuum"    , 0 , 18 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS2, KLY2,SYS4:VACM   ,"Sys 4 Vacuum"    , 0 , 19 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS3, SPARE,01:VACM    ,"Vacuum Ch 20"    , 0 , 20 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS3, SPARE,02:VACM    ,"Vacuum Ch 21"    , 0 , 21 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS3, SPARE,03:VACM    ,"Vacuum Ch 22"    , 0 , 22 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS3, SPARE,04:VACM    ,"Vacuum Ch 23"    , 0 , 23 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS3, SPARE,05:VACM    ,"Vacuum Ch 24"    , 0 , 24 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS3, SPARE,06:VACM    ,"Vacuum Ch 25"    , 0 , 25 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS3, SPARE,07:VACM    ,"Vacuum Ch 26"    , 0 , 26 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS3, SPARE,08:VACM    ,"Vacuum Ch 27"    , 0 , 27 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 } 
+   	  { TRS3, SPARE,09:VACM    ,"Vacuum Ch 28"    , 0 , 28 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS3, SPARE,10:VACM    ,"Vacuum Ch 29"    , 0 , 29 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS3, SPARE,11:VACM    ,"Vacuum Ch 30"    , 0 , 30 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+   	  { TRS3, SPARE,12:VACM    ,"Vacuum Ch 31"    , 0 , 31 , 30 ,   0 , 30 , 30 ,   0 ,  0  , Torr,  5  , DBpoly, 1  , .001 , .001 }
+}
+

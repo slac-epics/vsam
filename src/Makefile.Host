@@ -1,0 +1,38 @@
+#==============================================================
+#
+#  Abs:  Makefile to build Host components
+#
+#  Name: Makefile.Host
+#
+#  Facility:  LBL
+#
+#  Auth: 18-Feb-1999, Author's Name  (USERNAME)
+#  Rev:  dd-mmm-yyyy, First Lastname (USERNAME)
+#
+#--------------------------------------------------------------
+#  Mod:
+#       27-Mar-2002, D. Kotturi (DAYLE)
+#         Added VSAMUtils.h
+#
+#==============================================================
+#
+TOP = ../../../..
+include $(TOP)/config/CONFIG_APP
+#----------------------------------------
+#  ADD MACRO DEFINITIONS AFTER THIS LINE
+#
+USER_DBDFLAGS += -I .. -I $(TOP)/dbd
+USER_DBDFLAGS += -I $(EPICS_SITE)/dbd
+USER_DBDFLAGS += -I $(EPICS_BASE)/dbd
+
+INC += VSAM.h
+INC += VSAMUtils.h
+
+DBDINSTALL += devVSAM.dbd
+DBDINSTALL += devVSAMCard.dbd
+#DBDEXPAND = VSAMInclude.dbd
+#DBDNAME   = vsamApp.dbd
+
+include $(TOP)/config/RULES.Host
+#----------------------------------------
+#  ADD RULES AFTER THIS LINE

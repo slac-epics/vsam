@@ -1,0 +1,88 @@
+grecord(bo,"$(S):V$(D)_reset")
+{
+	field(DESC,"VSAM 3 Reset")
+	field(DTYP,"VSAM")
+	field(OUT,"#C$(D) S32 @")
+	field(ZNAM,"RESET0")
+	field(ONAM,"RESET1")
+}
+grecord(bo,"$(S):V$(D)_diag")
+{
+	field(DESC,"Halt VSAM internal processor")
+	field(DTYP,"VSAM")
+	field(OUT,"#C$(D) S35 @")
+	field(ZNAM,"HALT0")
+	field(ONAM,"HALT1")
+}
+grecord(bo,"$(S):V$(D)_md_scan")
+{
+	field(DESC,"Set VSAM Scan Mode")
+	field(PINI,"YES")
+	field(DTYP,"VSAM")
+	field(OUT,"#C$(D) S33 @0")
+	field(ZNAM,"NORMAL")
+	field(ONAM,"FAST")
+	field(OSV,"MINOR")
+}
+grecord(bo,"$(S):V$(D)_md_data")
+{
+	field(DESC,"Set VSAM data meaning")
+	field(PINI,"YES")
+	field(DTYP,"VSAM")
+	field(OUT,"#C$(D) S33 @1")
+	field(ZNAM,"ANALOG")
+	field(ONAM,"FIRMREV")
+	field(OSV,"MINOR")
+}
+grecord(bi,"$(S):V$(D)_st_scan")
+{
+	field(DESC,"Current Scan Mode")
+	field(SCAN,"2 second")
+	field(PINI,"YES")
+	field(DTYP,"VSAM")
+	field(INP,"#C$(D) S34 @0")
+	field(OSV,"MINOR")
+	field(ZNAM,"NORMAL")
+	field(ONAM,"FAST")
+}
+grecord(bi,"$(S):V$(D)_st_data")
+{
+	field(DESC,"Current meaning of VSAM data")
+	field(SCAN,"2 second")
+	field(PINI,"YES")
+	field(DTYP,"VSAM")
+	field(INP,"#C$(D) S34 @1")
+	field(OSV,"MINOR")
+	field(ZNAM,"ANALOG")
+	field(ONAM,"FIRMREV")
+}
+grecord(bi,"$(S):V$(D)_st_cal_succ")
+{
+	field(DESC,"Calibration success flag")
+	field(PINI,"YES")
+	field(DTYP,"VSAM")
+	field(INP,"#C$(D) S34 @3")
+	field(ZSV,"MAJOR")
+	field(ZNAM,"FAILURE")
+	field(ONAM,"SUCCESS")
+}
+grecord(bo,"$(S):V$(D)_md_endian")
+{
+	field(DESC,"Set VSAM endianness")
+	field(DTYP,"VSAM")
+	field(OUT,"#C$(D) S33 @2")
+	field(ZNAM,"BIG-END")
+	field(ONAM,"LITTLE-END")
+	field(OSV,"MINOR")
+}
+grecord(bi,"$(S):V$(D)_st_end")
+{
+	field(DESC,"Current VSAM endianness")
+	field(SCAN,"2 second")
+	field(PINI,"YES")
+	field(DTYP,"VSAM")
+	field(INP,"#C$(D) S34 @2")
+	field(ZNAM,"BIG-END")
+	field(ONAM,"LITTLE-END")
+	field(OSV,"MINOR")
+}

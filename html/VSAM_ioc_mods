@@ -1,0 +1,24 @@
+To use the VSAM software, the VxWorks kernel must be able to perform
+A24/D32 accesses.  You can modify your target's kernel, if necessary,
+as described below.
+
+The following instructions are for mv167 and mv177 kernels.
+
+Change the file <vxworks_dir>/target/config/<target>/sysLib.c as follows:
+
+        In the function sysHwInit, in the section setting up VMEbus access,
+        change the lines
+             *VMECHIP2_LBSAR           |= LBSAR2_AM_STD_USR_DATA |
+                                          LBSAR2_D16;
+        to
+             /* D16 bit must be cleared to enable D32 */
+             *VMECHIP2_LBSAR           &= ~LBSAR2_D16;
+             *VMECHIP2_LBSAR           |= LBSAR2_AM_STD_USR_DATA |
+                                          LBSAR2_D32;
+
+        You may also wish to change the comment a few lines above:
+             *   STD (A24/D16)  0xf0000000 - 0xf0ffffff
+        to
+             *   STD (A24/D32)  0xf0000000 - 0xf0ffffff
+
+and make a new kernel.

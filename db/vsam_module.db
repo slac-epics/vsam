@@ -1,0 +1,76 @@
+grecord(bi,"$(S):VSAM:C$(M):ST_CAL") {
+	field(DESC,"VSAM Card $(M) Calib status")
+	field(PINI,"YES")
+	field(DTYP,"VSAM")
+	field(INP,"#C$(M) S34 @3")
+	field(ZSV,"MAJOR")
+	field(ZNAM,"Failure")
+	field(ONAM,"Success")
+}
+grecord(bi,"$(S):VSAM:C$(M):ST_DATA") {
+	field(DESC,"VSAM Card $(M) Data mode")
+	field(SCAN,"2 second")
+	field(PINI,"YES")
+	field(DTYP,"Soft Channel")
+	field(OSV,"MINOR")
+	field(ZNAM,"Analog")
+	field(ONAM,"Firmrev")
+}
+grecord(bi,"$(S):VSAM:C$(M):ST_END") {
+	field(DESC,"VSAM Card $(M) byte order")
+	field(SCAN,"2 second")
+	field(PINI,"YES")
+	field(DTYP,"VSAM")
+	field(INP,"#C$(M) S34 @2")
+	field(OSV,"MINOR")
+	field(ZNAM,"Big-Endian")
+	field(ONAM,"Little-Endian")
+}
+grecord(bi,"$(S):VSAM:C$(M):ST_SCAN") {
+	field(DTYP,"Soft Channel")
+}
+grecord(bo,"$(S):VSAM:C$(M):DIAG") {
+	field(DESC,"Halt VSAM internal processor")
+	field(DTYP,"VSAM")
+	field(OUT,"#C$(M) S35 @")
+	field(ZNAM,"HALT0")
+	field(ONAM,"HALT1")
+}
+grecord(bo,"$(S):VSAM:C$(M):MD_DATA") {
+	field(DESC,"VSAM Card $(M) data mode")
+	field(PINI,"YES")
+	field(DTYP,"VSAM")
+	field(OUT,"#C$(M) S33 @1")
+	field(ZNAM,"ANALOG")
+	field(ONAM,"FIRMREV")
+	field(OSV,"MINOR")
+}
+grecord(bo,"$(S):VSAM:C$(M):MD_END") {
+	field(DESC,"VSAM Card $(M) endianness")
+	field(DTYP,"VSAM")
+	field(OUT,"#C$(M) S33 @2")
+	field(ZNAM,"Big-Endian")
+	field(ONAM,"Little-Endian")
+	field(OSV,"MINOR")
+}
+grecord(bo,"$(S):VSAM:C$(M):MD_SCAN") {
+	field(DESC,"VSAM Card $(M) Scan Mode")
+	field(PINI,"YES")
+	field(DTYP,"VSAM")
+	field(OUT,"#C$(M) S33 @0")
+	field(ZNAM,"Normal")
+	field(ONAM,"Fast")
+}
+grecord(bo,"$(S):VSAM:C$(M):RESET") {
+	field(DESC,"VSAM Card $(M) Reset")
+	field(DTYP,"VSAM")
+	field(OUT,"#C$(M) S32 @")
+	field(ZNAM,"Reset")
+	field(ONAM,"Reset")
+}
+grecord(vmeCard,"$(S):VSAM:C$(M)") {
+	field(DESC,"32-Chan Smart Analog Monitor")
+	field(PINI,"YES")
+	field(DTYP,"VSAM")
+	field(INP,"#C$(M) S0 @")
+}

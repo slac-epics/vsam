@@ -1,0 +1,268 @@
+%I Unidraw 1.2 
+%I 2036 4758672 0 13
+
+%I 2020 4768088 0 $(S):$(C):$(Q) 0 
+%I 2028 4349536 0 1 
+%I 2027 4768616 0 
+%I 2028 4349536 0 
+%I 4"node"$(S):$(C):$(Q) VAL nodevar 0 0 0 
+%I 1 
+%I c #000000 0 0 0 
+%I c #ffffff 0.996109 0.996109 0.996109 
+%I b 65535 0 
+%I t ~ $(S):$(C):$(Q) VAL l 2 nodecomp 
+%I t 1 0 0 1 1455.5 1643.5 1 0 0 
+%I 2028 4349768 0 0 
+%I 2027 4768872 0 
+%I 2028 4349768 0 
+%I 4"node"TR00:VSAM:C$(M):DATA$(CH) VAL nodevar 0 0 0 
+%I 1 
+%I c #000000 0 0 0 
+%I c #ffffff 0.996109 0.996109 0.996109 
+%I b 65535 0 
+%I t 1 0 0 1 1169.67 970.704 $(S):$(C):$(Q) INPL l 2 nodecomp 
+
+%I 9090 4347440 0 8
+
+%I 17"Macro Definitions"
+%I 0 
+%I c Black 0 0 0 
+%I c ~ 
+%I f *-helvetica-medium-r-*-80-75-* /Helvetica 8 
+%I t 2.06525 0 0 2.06525 1131.38 1808.67 
+
+%I 9090 4347656 0 8
+
+%I 55"S = Station
+C = Component
+Q = Quantity
+D = Description
+"
+%I 0 
+%I c Black 0 0 0 
+%I c ~ 
+%I f *-helvetica-medium-r-*-80-75-* /Helvetica 8 
+%I t 1 0 0 1 1125 1774 
+
+%I 9090 4350920 0 8
+
+%I 148"H = High Operating Limit
+L = Low Operating Limit
+HH - High hight alarm limit
+HI   - High alarm limit
+LL  - Low low alarm limit
+LO - Low alarm limit
+"
+%I 0 
+%I c Black 0 0 0 
+%I c ~ 
+%I f *-helvetica-medium-r-*-80-75-* /Helvetica 8 
+%I t 1 0 0 1 1207 1783 
+
+%I 9045 4351136 0 144 409 384 543 
+%I 1 
+%I c Black 0 0 0 
+%I c White 1 1 1 
+%I b 65535 0 
+%I p n 
+%I t 1 -0 -0 1 938 1310 
+
+%I 9090 4351352 0 8
+
+%I 47"Note: The corresponding DAC's are found in TR01"
+%I 0 
+%I c Black 0 0 0 
+%I c ~ 
+%I f *-helvetica-medium-r-*-80-75-* /Helvetica 8 
+%I t 1.86236 0 0 1.86236 1041.23 1877.69 
+
+%I 9045 4351568 0 143 551 581 594 
+%I 1 
+%I c Black 0 0 0 
+%I c White 1 1 1 
+%I b 65535 0 
+%I p n 
+%I t 1 -0 -0 1 866 1308 
+
+%I 2020 4353128 0 TR00:VSAM:C$(M):DATA$(CH) 0 
+%I 2028 4357400 0 1 
+%I 2027 4769512 0 
+%I 2028 4357400 0 
+%I 4"node"TR00:VSAM:C$(M):DATA$(CH) VAL nodevar 0 0 0 
+%I 1 
+%I c #000000 0 0 0 
+%I c #ffffff 0.996109 0.996109 0.996109 
+%I b 65535 0 
+%I t ~ TR00:VSAM:C$(M):DATA$(CH) VAL l 2 nodecomp 
+%I t 1 0 0 1 1214.5 1612.5 0 1 2 
+%I 2028 4357632 0 0 
+%I 2027 4769768 0 
+%I 2028 4357632 0 
+%I 4"node"$(S):$(C):$(Q) VAL nodevar 0 0 0 
+%I 1 
+%I c #000000 0 0 0 
+%I c #ffffff 0.996109 0.996109 0.996109 
+%I b 65535 0 
+%I t 1 0 0 1 1246.67 970.704 TR00:VSAM:C$(M):DATA$(CH) FLNK r 2 nodecomp 
+%I 2028 4358440 0 1 
+%I 2027 4769960 0 
+%I 2028 4358440 0 
+%I 4"node"TR00:VSAM:C$(M):DATA$(CH) VAL nodevar 0 0 0 
+%I 1 
+%I c #000000 0 0 0 
+%I c #ffffff 0.996109 0.996109 0.996109 
+%I b 65535 0 
+%I t 1 0 0 1 -142 0 TR00:VSAM:C$(M):DATA$(CH) VAL l 2 nodecomp 
+%I 2028 4360168 0 1 
+%I 2027 4770152 0 
+%I 2028 4360168 0 
+%I 4"node"TR00:VSAM:C$(M):DATA$(CH) VAL nodevar 0 0 0 
+%I 1 
+%I c #000000 0 0 0 
+%I c #ffffff 0.996109 0.996109 0.996109 
+%I b 65535 0 
+%I t ~ TR00:VSAM:C$(M):DATA$(CH) VAL r 2 nodecomp 
+
+%I 2020 4363176 0 TR00:VSAM:C$(M):RNG$(CH) 0 
+%I 2028 4773520 0 1 
+%I 2027 4770248 0 
+%I 2028 4773520 0 
+%I 4"node"TR00:VSAM:C$(M):RNG$(CH) VAL nodevar 0 0 0 
+%I 1 
+%I c #000000 0 0 0 
+%I c #ffffff 0.996109 0.996109 0.996109 
+%I b 65535 0 
+%I t ~ TR00:VSAM:C$(M):RNG$(CH) VAL l 2 nodecomp 
+%I t 1 0 0 1 1172.5 1545.5 0 0 0 
+
+%I 2020 4773896 0 TR00:VSAM:C$(M):AC$(CH) 0 
+%I 2028 4779200 0 1 
+%I 2027 4361352 0 
+%I 2028 4779200 0 
+%I 4"node"TR00:VSAM:C$(M):AC$(CH) VAL nodevar 0 0 0 
+%I 1 
+%I c #000000 0 0 0 
+%I c #ffffff 0.996109 0.996109 0.996109 
+%I b 65535 0 
+%I t ~ TR00:VSAM:C$(M):AC$(CH) VAL l 2 nodecomp 
+%I t 1 0 0 1 1173.5 1489.5 0 0 0 
+
+%I 9090 4777544 0 8
+
+%I 42"Smart Analog Monitor (VSAM) Channel Data 
+"
+%I 0 
+%I c Black 0 0 0 
+%I c ~ 
+%I f *-helvetica-medium-r-*-80-75-* /Helvetica 8 
+%I t 3.60833 0 0 3.60833 924.596 1924.96 
+
+%I 2029 4672224 0 2
+%I 386 329 
+%I 455 330 
+%I c #000000 0 0 0 
+%I c #ffffff 0.996109 0.996109 0.996109 
+%I b 65535 0 
+%I t 1.9058 0 0 0 516.362 1636.5 
+%I 2028 4779920 0 0 
+%I 2027 4361704 0 
+%I 2028 4779920 0 
+%I 4"node"TR00:VSAM:C$(M):DATA$(CH) VAL nodevar 386 329 1 
+%I 4294967295 
+%I c ~ 
+%I c ~ 
+%I b n 
+%I t 1 0 0 1 866 1307.5 0 0 r 0 nodecomp 
+%I 2028 4781648 0 1 
+%I 2027 4361896 0 
+%I 2028 4781648 0 
+%I 4"node"TR00:VSAM:C$(M):DATA$(CH) VAL nodevar 455 330 1 
+%I 4294967295 
+%I c ~ 
+%I c ~ 
+%I b n 
+%I t 1 0 0 1 928.5 1306.5 0 0 l 0 nodecomp 
+%I 9077 4780568 0 
+%I 2027 4361704 0 
+%I 2027 4361896 0 0 
+%I 4294967295 
+%I c ~ 
+%I c ~ 
+%I b ~ 
+%I t ~ 
+%I 2030 4781888 0 
+%I 0 0 0 
+%I 6"pvlink"INPL $(S):$(C):$(Q) NPP MS NPP/MS pvlinkvar 
+
+%I 2029 4672344 0 4
+%I 387 313 
+%I 457 313 
+%I 457 354 
+%I 519 354 
+%I c #000000 0 0 0 
+%I c #ffffff 0.996109 0.996109 0.996109 
+%I b 65535 0 
+%I t 1 0 0 1.0122 865.5 1303.68 
+%I 2028 4783144 0 1 
+%I 2027 4362280 0 
+%I 2028 4783144 0 
+%I 4"node"$(S):$(C):$(Q) VAL nodevar 387 313 1 
+%I 4294967295 
+%I c ~ 
+%I c ~ 
+%I b n 
+%I t 1 0 0 1 865.5 1307.5 0 0 r 0 nodecomp 
+%I 2028 4784872 0 0 
+%I 2027 4362472 0 
+%I 2028 4784872 0 
+%I 4"node"$(S):$(C):$(Q) VAL nodevar 519 354 1 
+%I 4294967295 
+%I c ~ 
+%I c ~ 
+%I b n 
+%I t 1 0 0 1 865.5 1308 0 0 l 0 nodecomp 
+%I 9077 4783672 0 
+%I 2027 4362472 0 
+%I 2027 4362280 0 0 
+%I 4294967295 
+%I c ~ 
+%I c ~ 
+%I b ~ 
+%I t ~ 
+%I 2030 4785112 0 
+%I 0 0 0 
+%I 6"pvlink"FLNK TR00:VSAM:C$(M):DATA$(CH) PP NMS PP/NMS pvlinkvar 
+
+%I 4294967295 
+%I b ~ 
+%I c ~ 
+%I c ~ 
+%I f ~ 
+%I p ~ 
+%I t ~ ---no-prefix--- 
+%I 4 
+%I 1384.5 0 0 0 0 1e+06 1e+06 
+%I 2028 4784872 0 
+%I 2028 4349536 0 
+%I 1383.5 0 0 0 0 1e+06 1e+06 
+%I 2028 4781648 0 
+%I 2028 4349768 0 
+%I 1252.5 0 0 0 0 1e+06 1e+06 
+%I 2028 4783144 0 
+%I 2028 4357632 0 
+%I 1252 0 0 0 0 1e+06 1e+06 
+%I 2028 4779920 0 
+%I 2028 4360168 0 
+%I 4 
+%I 1662 0 0 0 0 1e+06 1e+06 
+%I 2028 4784872 0 
+%I 2028 4349536 0 
+%I 1636.5 0 0 0 0 1e+06 1e+06 
+%I 2028 4781648 0 
+%I 2028 4349768 0 
+%I 1620.5 0 0 0 0 1e+06 1e+06 
+%I 2028 4783144 0 
+%I 2028 4357632 0 
+%I 1636.5 0 0 0 0 1e+06 1e+06 
+%I 2028 4779920 0 
+%I 2028 4360168 0 

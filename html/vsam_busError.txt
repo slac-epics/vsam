@@ -1,0 +1,22 @@
+From: Olsen, Jeff
+Sent: Thursday, October 25, 2001 2:48 PM
+To: Luchini, Kristi; Nelson, David J.
+Subject: VSAM BusError
+
+Kristi,
+
+  The bug I found in the VSAM is that if the 24 bit portion of the VME address matches the VSAM address for a D32 cycle with the AM lines other than 39-3B OR 3D-3F (Standard A24 cycle), the VSAM will generate a BERR.
+
+If you have an A32/D32 module at 0x80400000 and a VSAM at 0x00400000, the VSAM will generate a bus error for accesses to the other module.
+
+I lifted U3, pin 8. This drives the BERR line to the P1 connector. The VSAM will never generate a BERR. You could also cut the trace from R1 to the P1 connector.
+
+Jeff Olsen
+Stanford Linear Acc. Center
+2575 Sand Hill Rd.
+Menlo Park, Ca. 94025
+
+Phone:  (650) 926-2471
+Page:   (650) 849-9481
+E-MAIL: jjo@slac.stanford.edu
+WEB:    http://www.slac.stanford.edu/~jjo 

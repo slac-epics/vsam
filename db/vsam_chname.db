@@ -1,0 +1,31 @@
+grecord(ai,"$(S):V$(D):CH$(C):DATA")
+{
+	field(DESC,"VSAM channel $(C) data")
+	field(SCAN,"2 second")
+	field(DTYP,"VSAM")
+	field(INP,"#C$(D) S$(C) @D")
+        field(PREC,"3")
+        field(EGU,"Volts")
+        field(EGUF,"10")
+        field(HOPR,"10")
+        field(MDEL,"1.0e-03")
+}
+grecord(ai,"$(S):V$(D):CH$(C):RNG")
+{
+	field(DESC,"VSAM channel $(C) range")
+	field(SCAN,"2 second")
+	field(DTYP,"VSAM")
+	field(INP,"#C$(D) S$(C) @R")
+        field(PREC,"2")
+        field(EGU,"Volts")
+}
+grecord(ai,"$(S):V$(D):CH$(C):AC")
+{
+	field(DESC,"VSAM ch $(C) AC measurement")
+	field(SCAN,"2 second")
+	field(DTYP,"VSAM")
+	field(INP,"#C$(D) S$(C) @A")
+        field(PREC,"3")
+        field(EGU,"Volts")
+        field(MDEL,"1.0e-03")
+}

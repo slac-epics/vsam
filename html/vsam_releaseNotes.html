@@ -1,0 +1,100 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.79 [en] (WinNT; U) [Netscape]">
+   <title>EPICS: AllenBradley
+Driver and Device Support
+Release Notes
+</title>
+</head>
+<body>
+
+<h1>
+EPICS:&nbsp; VME Smart Analog Monitor (VSAM)<br>
+Driver and Device Support<br>
+Release Notes<br>
+Release 1.0</h1>
+
+<address>
+&nbsp;</address>
+
+<address>
+Original Author:&nbsp; Susanna Jacobson</address>
+
+<address>
+Lawrence Berkeley National Laboratory</address>
+
+<address>
+Maintainer:&nbsp; Stephanie Allison</address>
+
+<address>
+Stanford Linear Accelerator Center - ESD Software Engineering</address>
+
+<br>Updated:&nbsp; March 2002
+<br>&nbsp;
+<h2>
+March 27, 2002</h2>
+
+<ul><i>Dayle Kotturi:&nbsp; SLAC Babar</i>
+<li>
+Added diagnostic routines that can be executed from the target shell (ref:
+VSAMUtils.c)</li>
+
+<li>
+Fixed calibration bug. The symptoms that occured was then when a VSAM module,
+in NORMAL,&nbsp; mode failed calibration (ie: calibration LED on the module
+front panel is red)&nbsp; the software never seemed to update any of the
+other registers. Hitting the "reset" button on the VSAM panel was the only
+means of restoring calibration to a valid state.</li>
+</ul>
+
+<h2>
+October 25, 2001</h2>
+
+<blockquote><i>Jeff Olsen:&nbsp;&nbsp; SLAC - ESD Hardware</i>
+<li>
+<a href="vsam_busError.txt">VSAM Bus Error - A24/A32 Hardware bug</a></li>
+</blockquote>
+
+<h2>
+March 9, 2001</h2>
+
+<blockquote><i>Kristi Luchini:&nbsp;&nbsp; SLAC - ESD Software</i>
+<li>
+Increased the settle time after setting the mode register before reading
+the firmware version.</li>
+
+<li>
+Remove check for sepecific firmware version during driver initialization.</li>
+
+<li>
+Added information level to the driver i/o report.</li>
+</blockquote>
+
+<h2>
+February 18, 1999</h2>
+
+<dl>
+<dl><i>Kristi Luchini:&nbsp; SLAC - ESD Software</i>
+<li>
+Removed module_types.h dependency</li>
+
+<li>
+Added VSAM_init()&nbsp; tobe called prior to iocInit().</li>
+
+<li>
+Added backward compatiblity</li>
+</dl>
+</dl>
+
+<h2>
+October 24,&nbsp; 1997</h2>
+
+<ul><i>Susanna Jacobson:&nbsp; LANL</i>
+<li>
+Original Release</li>
+</ul>
+
+</body>
+</html>
