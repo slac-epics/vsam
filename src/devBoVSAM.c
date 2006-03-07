@@ -3,15 +3,16 @@
  *      Author:         Susanna Jacobson
  *      Date:           10-29-97
  */
-
-#include	<vxWorks.h>
-
+#include        "epicsVersion.h"
+#include        <alarm.h>
 #include	<dbDefs.h>
+#include        <dbAccess.h>
 #include        <recSup.h>
 #include	<devSup.h>
+#include        <recGbl.h>
 #include	<boRecord.h>
 #include	"VSAM.h"
-
+#include        <epicsExport.h>
 
 
 /* Local prototypes */
@@ -33,6 +34,9 @@ struct {
 	init_record,
 	NULL,
 	write_bo};
+
+epicsExportAddress(dset, devBoVSAM);
+
 
 static long init_record(struct boRecord	*pbo)
 {

@@ -1,7 +1,4 @@
 /*
-
-   **MEMBER**=xxxLIBS:xxxLIB
-   **CVS**=xxx
 =============================================================
  
   Abs:  Input Device Support for VME 
@@ -18,34 +15,34 @@
  
 -------------------------------------------------------------
   Mod:
-        dd-mmm-yyyy, First Lastname (USERNAME):
-           Comments 
+        05-Aug-2004, K. Luchini     (LUCHINI):
+          support rtems and vxWorks for EPICS R3.14.7 
   
 =============================================================
 */
 
 
 /* Include Files */
-#include   "vxWorks.h"        /* OK,ERROR,TRUE,FALSE      */
-#include   "stdioLib.h"       /* NULL                     */
-#include   "types.h"          /* VME_IO                   */
+#include   "epicsVersion.h"
 #include   "string.h"         /* strcpy                   */
 
+#include   "dbCommon.h"       /* struct dbCommon          */
 #include   "dbFldTypes.h"     /* DBF_FLOAT                */
 #include   "alarm.h"          /* READ_ALARM,INVALID_ALARM */
 #include   "dbScan.h"         /* IOSCANPVT                */
 #include   "recSup.h"         /* recGblRecordError        */
 #include   "devSup.h"         /* DEVSUPFUN, S_dev_badBus  */
+#include   "recGbl.h"         /* for recGblRecordError()  */
+#include   "errMdef.h"        /* global var errVerbose    */
 #include   "vmeCardRecord.h"  /* struct vmeCardRecord     */
 #include   "VSAM.h"           /* VSAM_get_adrs(),etc      */
-#include   "db_proto.h"       /* alarmStatusChk()         */
-
+#include   <epicsExport.h>
 
 
 
 /* Local Prototypes */
-static long init( void *rec_p );
-static long read( void *rec_p );
+static long devCardVSAM_init( void *rec_p );
+static long devCardVSAM_read( void *rec_p );
 
 
 /* 
@@ -59,9 +56,9 @@ struct {
   DEVSUPFUN  init_record;     
   DEVSUPFUN  get_ioint_info; 
   DEVSUPFUN  read;            
-}devCardVSAM = { 5,NULL,NULL,init,NULL,read };
+}devCardVSAM = { 5,NULL,NULL, devCardVSAM_init,NULL, devCardVSAM_read };
 
-
+epicsExportAddress(dset, devCardVSAM);
  
 
 /*=============================================================
@@ -69,7 +66,7 @@ struct {
   Abs:  Synchronous Device Support Initialization
         for a VME Smart Analog Monitor Module (VSAM)
  
-  Name: init 
+  Name:  devCardVSAM_init 
  
   Args: rec_p                     Record information  
           Use:  struct
@@ -90,7 +87,7 @@ struct {
          S_db_badChoice   - Failure, due to FTVL field not set to FLOAT
 
 =============================================================*/
-static long init( void *rec_p )
+static long devCardVSAM_init( void *rec_p )
 {  
    long                   status=OK;    /* return status         */
    struct vmeCardRecord  *modu_ps;     /* waveformrecord info   */
@@ -149,7 +146,7 @@ static long init( void *rec_p )
  
   Abs: VME Card input device suppot        
  
-  Name: read 
+  Name:  devCardVSAM_read 
  
   Args: rec_p                   Record Information
           Use:  struct
@@ -169,13 +166,15 @@ static long init( void *rec_p )
             Otherwise, see return from 
 
 =============================================================*/
-static long read( void *rec_p )
+static long  devCardVSAM_read( void *rec_p )
 {
     long                  status=OK;                /* return status        */ 
+    long                  sev;                      /* increased severity   */
     unsigned short        cur_stat= READ_ALARM;     /* alarm status         */
     unsigned short        cur_sev = INVALID_ALARM;  /* alarm severity       */
     struct vmeCardRecord *modu_ps=NULL;             /* record info          */
     static const char    *taskName_c = "devModuVSAM( read )\n";
+    struct dbCommon      *rec_ps = (struct dbCommon *)rec_p;
     VSAMMEM              *pVSAM = NULL;
 
    /* 
@@ -185,7 +184,11 @@ static long read( void *rec_p )
     */ 
     modu_ps = (struct vmeCardRecord *)rec_p;
     if ( !modu_ps->dpvt ) {
-      alarmStatusChk(cur_stat,cur_sev,status,rec_p,taskName_c );
+      sev = recGblSetSevr( rec_ps,cur_stat,cur_sev );
+      if ( sev && errVerbose  &&
+	 ((rec_ps->stat!= cur_stat) || (rec_ps->sevr!= INVALID_ALARM)) ) {
+         recGblRecordError( status,rec_p,(char *)taskName_c );
+      }
       status = ERROR;
     }
     else {

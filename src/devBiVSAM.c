@@ -3,14 +3,16 @@
  *      Author:         Susanna Jacobson
  *      Date:           10-31-97
  */
-
-#include	<vxWorks.h>
-#include	<dbDefs.h>
+#include        "epicsVersion.h"
+#include        <alarm.h>
+#include        <dbDefs.h>         /* DB_MAX_CHOICES    */
+#include        <dbAccess.h>       /* for S_db_badField */
 #include	<recSup.h>
 #include	<devSup.h>
+#include        <recGbl.h>
 #include	<biRecord.h>
 #include        "VSAM.h"
-
+#include        <epicsExport.h>
 
 /* Local prototypes */
 static long init_record(struct biRecord *pbi);
@@ -31,6 +33,9 @@ struct {
 	init_record,
 	NULL,
 	read_bi};
+
+epicsExportAddress(dset, devBiVSAM);
+
 
 static long init_record(struct biRecord	*pbi)
 {

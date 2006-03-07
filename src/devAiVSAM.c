@@ -3,13 +3,9 @@
  *      Author:         Susanna Jacobson
  *      Date:           10-24-97
  */
-
-#include	<vxWorks.h>
-#include	<types.h>
-#include	<stdioLib.h>
+#include        "epicsVersion.h"
 #include	<string.h>
 #include	<stdlib.h>
-#include	<memLib.h>
 
 #include	<alarm.h>
 #include	<cvtTable.h>
@@ -17,10 +13,12 @@
 #include	<dbAccess.h>
 #include	<recSup.h>
 #include	<devSup.h>
+#include        <recGbl.h>
 #include	<link.h>
+#include        <devLib.h>         /* for S_dev_noMemory */
 #include	<aiRecord.h>
 #include	"VSAM.h"
-
+#include        <epicsExport.h>
 
 /* Local prototypes */
 static long init_record(struct aiRecord *pai);
@@ -61,6 +59,8 @@ struct {
 	NULL,
 	read_ai};
 
+epicsExportAddress(dset, devAiSIAM);
+epicsExportAddress(dset, devAiVSAM);
 
 static long init_record(struct aiRecord	*pai)
 {
@@ -104,8 +104,8 @@ static long init_record(struct aiRecord	*pai)
                  status = OK;
 	       }
                else {
-                 status = errno;
-	         recGblRecordError(errno,(void *)pai,memErr_c );
+                 status =  S_dev_noMemory;
+	         recGblRecordError(status,(void *)pai,memErr_c );
 	       }
 	     }
              else 

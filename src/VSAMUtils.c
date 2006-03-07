@@ -3,10 +3,10 @@
  *      Author:         Dayle Kotturi
  *      Date:           03-29-02
  */
-#include <vxWorks.h>
-#include <stdio.h>
-#include <iv.h>
 
+#include <stdio.h>       /* for printf() */
+ 
+#include "epicsVersion.h"
 #include "VSAM.h"
 #include "VSAMUtils.h"
 

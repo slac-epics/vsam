@@ -4,7 +4,10 @@
  *	Author:		Susanna Jacobson
  *	Date:		10-30-97
  *
- * Mods:  09-Mar-01, K. Luchini 
+ * Mods: 
+ *        05-Aug-05, K. Luchini
+ *            Add definition for OK,ERROR and changed VOID to void
+ *        09-Mar-01, K. Luchini 
  *            Changed VSAM_HARDWARE_REV from 1 to 3
  *
  */
@@ -15,6 +18,13 @@
 #define VSAM_HARDWARE_REV 3           /* changed form 1 to 3 */
 #define VSAM_BASE_ADDRS   0x400000
 
+#ifndef OK
+#define OK 0
+#endif
+
+#ifndef ERROR
+#define ERROR -1
+#endif
 
 /* "channel" numbers for the four status and control registers */
 #define RESET_CHANNEL   32              /* VSAM reset register           */
@@ -45,8 +55,7 @@
 
 /* divisor used for AC measurements.                 */
 /* AC peak-to-peak voltage is ranges[range]*ac/16384 */
-#define AC_DIVISOR      16384.0             /* 2**14 */
-
+#define AC_DIVISOR      16384.0               /* 2**14 */
 
 typedef struct {
 	short		lchan;
@@ -54,6 +63,7 @@ typedef struct {
 	int		shift;
 	void		*prange;
 } VSAMPVT;
+
 
 /* memory structure of the VSAM - 256 bytes total */
 #define VSAM_MEM_SIZE    256
@@ -95,7 +105,7 @@ int  checkVSAMAi( short channel );
 int  checkVSAMBi( short channel, char  parm );
 int  checkVSAMBo( short channel );
 long VSAM_io_report( char level );
-VOID VSAM_rval_report( short int card,short int flag );
+void VSAM_rval_report( short int card,short int flag );
 int  VSAM_init( long  *base_addrs,short  num_cards, short first );
 int  VSAM_present( short card,VSAMMEM *pVSAM );
 int  VSAM_get_adrs( short card,VSAMMEM **ppVSAM );
