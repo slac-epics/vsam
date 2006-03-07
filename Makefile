@@ -1,5 +1,5 @@
 TOP=../..
-include $(TOP)/config/CONFIG_APP
+include $(TOP)/configure/CONFIG
 DIRS += src html
-include $(TOP)/config/RULES_DIRS
+include $(TOP)/configure/RULES_TOP
 
