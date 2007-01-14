@@ -14,8 +14,11 @@
 #include <rtems/error.h>
 #include <bsp.h>
 #include <syslog.h>
+
+#if defined(__PPC__)
 #include <bsp/VME.h>
 #include <bsp/bspExt.h>
+#endif
 
 #else
 #include <vxWorks.h>
@@ -229,8 +232,9 @@ int VSAM_present( short card,VSAMMEM *pVSAM )
      VSAMCNFG       *pCNFG = &CNFG_as[card];
      int             attempts=0;
 
+     /*   status = devReadProbe(wcnt,(void*)pVSAM,(void*)&lval); */
 #ifdef __rtems__
-     status = bspExtMemProbe ((void*)pVSAM, 0/*read*/, wcnt,(void *)&lval);
+     status = bspExtMemProbe ((void*)pVSAM, 0, wcnt,(void *)&lval); 
      if (status!=RTEMS_SUCCESSFUL) {
         return S_dev_noDevice;
         printf(noCard_c,(int)card,(int)pVSAM);
