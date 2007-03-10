@@ -24,4 +24,4 @@ device(bo,VME_IO,devBoVSAM,"VSAM")
 
 #  BiRa VME-7305 (VSAM) Driver Support
 driver(drvVSAM)
-registrar(drvVSAMRegistrar)
+
