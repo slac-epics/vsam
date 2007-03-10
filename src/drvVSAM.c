@@ -41,7 +41,6 @@
 #include	"VSAM.h"           /* VSAM_NUM_CHANS,etc   */
 #include        "VSAMUtils.h"      /* for VSAM_testMem()   */
 #include        "epicsExport.h"
-#include        "iocsh.h"
 
 /* Messages - informational and error */
 static char *noCard_c    = "VSAM Card %hd not found at (A24) address 0x%8.8lx\n";
@@ -69,7 +68,6 @@ static long init();
 static long report(int level);
 static int VSAM_clear( VSAMMEM *pVSAM );
 
-
 /* Global variables        */
 /* VSAM driver entry table */
 
@@ -82,6 +80,7 @@ struct {
 	report,
 	init};
 
+epicsExportAddress(drvet,drvVSAM);
 
 
 /* Driver initialization routines */
