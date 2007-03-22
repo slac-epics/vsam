@@ -4,64 +4,66 @@
  *      Date:           03-29-02
  */
 
-#include <stdio.h>       /* for printf() */
- 
-#include "epicsVersion.h"
 #include "VSAM.h"
 #include "VSAMUtils.h"
+#include "basicIoOps.h"
 
-int VSAM_testMem (const VSAMMEM * pVSAM) {
-    unsigned long *data;
-    unsigned long tmpdata;
+
+int VSAM_testMem (const VSAMMEM * pVSAM)
+{
+    unsigned long          tmpdata;
+    unsigned long          val;
+    float                  fval;
+    volatile uint32_t     *paddr;
     int i;
     VSAMSHORTS s;
     VSAMCHARS c;
 
-    for (i=0; i<32; i++) {
-        printf ("data[%2d]     Addr = %lu, Value = %f\n", 
-            i, (long) &pVSAM->data[i], pVSAM->data[i]);
+    for (i=0,paddr=(volatile uint32_t *)pVSAM->data; i<32; i++,paddr++) {
+        fval = (float)in_be32( paddr );
+        printf ("data[%2d]   Addr = %p, Value = %f\n", 
+                 i, paddr,fval );
     }
-    data = (unsigned long *) pVSAM->range;
-    for (i=0; i<8; i++) {
-        tmpdata = *data;
+
+    for (i=0,paddr=(volatile uint32_t *)pVSAM->range; i<8; i++,paddr++) {
+        tmpdata = in_be32(paddr);
         c.a = (CHARAMASK & tmpdata); 
         c.b = (CHARBMASK & tmpdata) >> 8; 
         c.c = (CHARCMASK & tmpdata) >> 16; 
         c.d = (CHARDMASK & tmpdata) >> 24; 
         /* range is an unsigned char, but use int to print out value */
-        printf ("range[%2d]    Addr = %lu, Values = %d, %d, %d, %d\n", 
-            i, (long) data, c.a, c.b, c.c, c.d);
-        ++data; 
+        printf ("range[%2d]    Addr = %p, Values = %d, %d, %d, %d\n", 
+               i, paddr, c.a, c.b, c.c, c.d);
+
     }
-    for (i=0; i<16; i++) {
-        tmpdata = *data;
+    for (i=0,paddr=(volatile uint32_t *)pVSAM->ac; i<16; i++,paddr++) {
+        tmpdata = in_be32(paddr);
         s.a = (SHORTAMASK & tmpdata); 
         s.b = (SHORTBMASK & tmpdata) >> 16; 
-        printf ("ac[%2d]       Addr = %lu, Values = %d, %d\n", 
-            i, (long) data, s.a, s.b);
-        ++data; 
+        printf ("ac[%2d]       Addr = %p, Values = %d, %d\n", 
+                i, paddr, s.a, s.b);
     }
-    printf ("reset        Addr = %lu, Value = %lu\n", 
-        (long) &pVSAM->reset, pVSAM->reset);
+    printf ("reset        Addr = %p, Value = %lu\n", 
+             &pVSAM->reset, pVSAM->reset);
 
-    printf ("mode_control Addr = %lu, Value = %lu\n", 
-        (long) &pVSAM->mode_control, pVSAM->mode_control);
+    printf ("mode_control Addr = %p, Value = %lu\n", 
+            &pVSAM->mode_control, pVSAM->mode_control);
 
-    printf ("status       Addr = %lu, Value = %lu\n", 
-        (long) &pVSAM->status, pVSAM->status);
+    printf ("status       Addr = %p, Value = %lu\n", 
+            &pVSAM->status, pVSAM->status);
 
-    printf ("pad          Addr = %lu, Value = %lu\n", 
-        (long) &pVSAM->pad, pVSAM->pad);
+    printf ("pad          Addr = %p, Value = %lu\n", 
+             &pVSAM->pad, pVSAM->pad);
+   
+    printf ("diag_mode    Addr = %p, Value = %lu\n", 
+             &pVSAM->diag_mode, pVSAM->diag_mode);
 
-    printf ("diag_mode    Addr = %lu, Value = %lu\n", 
-        (long) &pVSAM->diag_mode, pVSAM->diag_mode);
-
-    for (i=0; i<3; i++) {
-        printf ("padding[%1d]   Addr = %lu, Value = %lu\n", 
-            i, (long) &pVSAM->padding[i], pVSAM->padding[i]);
+    for (i=0,paddr=pVSAM->padding; i<3; i++,paddr++) {
+        val = in_be32( paddr );
+        printf ("padding[%1d]   Addr = %p, Value = %lu\n", 
+            i, paddr, val);
     }
-
-return OK;
+ return OK;
 }
 
 int checkStatus (const VSAMMEM * pVSAM ) {

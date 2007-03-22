@@ -4,9 +4,6 @@
  *	Date:		10-24-97
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <math.h>         /* for modf() */
 
 #ifdef __rtems__
@@ -32,12 +29,11 @@
 #include <time.h>           /* for CLOCKS_PER_SEC    */
 #endif
 
-#include	"dbDefs.h"
-#include	"dbScan.h"
-#include	"drvSup.h"
+#include        "dbDefs.h"
 #include        "errMdef.h"        /* errMessage()         */
 #include        "devLib.h"         /* devRegisterAddress() */
-
+#include        "errlog.h"         /* epicslogPrintf()     */
+#include        "basicIoOps.h"     /* in_be32()            */
 #include	"VSAM.h"           /* VSAM_NUM_CHANS,etc   */
 #include        "VSAMUtils.h"      /* for VSAM_testMem()   */
 #include        "epicsExport.h"
@@ -45,28 +41,29 @@
 /* Messages - informational and error */
 static char *noCard_c    = "VSAM Card %hd not found at (A24) address 0x%8.8lx\n";
 static char *cardFound_c = "VSAM Card %hd found at (A24) address 0x%8.8lx\n";
-
-#ifdef DEBUG
 static char *cardNotFound_c   = "verifyVSAM: card %hd not found\n";
 static char *chanOutOfRange   = "verifyVSAM: chan limit %d but chan %d\n";
 static char *invParam_c       = "verifyVSAM: unknown param char %c\n";
 static char *invRange_c       = "translateVSAMChannel: can't allocate range struct\n";
-#endif
 
+
+
+/* Global varaibles */
+int     VSAM_DRV_DEBUG = 0;
 
 /* Local variables */
-/* array for keeping track of cards found at initialization */
-static VSAMMEM	       	**p_VSAM = 0;
-static VSAMCNFG           CNFG_as[VSAM_MAX_CARDS];
-
-static short ai_cards_found  = 0;
-static short ai_num_cards    = VSAM_MAX_CARDS;
+static VSAM_CARD_LIST  VSAM_card_list;
+static short           card_list_inited = 0;
+static short           ai_cards_found   = 0;
 
 
 /* local function prototypes */
-static long init();
-static long report(int level);
-static int VSAM_clear( VSAMMEM *pVSAM );
+static long    init();
+static long    report(int level);
+static int     VSAM_clear( VSAMMEM *pVSAM );
+static int     VSAM_calibrateCheck( VSAMMEM *pMem );
+static VSAM_ID VSAM_getByCard( short  card );
+static VSAM_ID VSAM_getByAddr( unsigned long baseAddr );
 
 /* Global variables        */
 /* VSAM driver entry table */
@@ -75,11 +72,7 @@ struct {
 	long		number;
 	DRVSUPFUN	report;
 	DRVSUPFUN	init;
-} drvVSAM={
-	2,
-	report,
-	init};
-
+} drvVSAM={2,report,init};
 epicsExportAddress(drvet,drvVSAM);
 
 
@@ -87,126 +80,129 @@ epicsExportAddress(drvet,drvVSAM);
 
 static long init()
 {
-    int              status=OK;
-    VSAMMEM         *pVSAM = NULL;          /* local VME address */
-    size_t           len = sizeof(VSAMMEM);
-    short            i_card;
-    char             name_c[20];
-    epicsAddressType type=atVMEA24;
-    volatile void *pPhysicalAddress = NULL;
+    int        status=OK;
+    VSAM_ID    pcard = NULL;
+ 
 
+    if( !card_list_inited )  return(OK);
 
-    /* Register all VSAM's found eariler */
-     if ( !p_VSAM || !ai_cards_found ) {
-       #ifdef DEBUG
-          printf("No VSAM cards found\n");
-       #endif
-       return(status);
-     }
-
-    for ( i_card=0; i_card<VSAM_MAX_CARDS; i_card++ ) {  
-       if ( CNFG_as[i_card].present ) {  
-          sprintf(name_c,"VSAM-%.2hd",i_card );
-          pPhysicalAddress = (volatile void *)pVSAM; 
-          status = devRegisterAddress( (const char *)name_c,type,
-                                       CNFG_as[i_card].bus_addr,
-                                       len,&pPhysicalAddress );
-          if (status==OK) {
-             CNFG_as[i_card].registered = TRUE;
-             #ifdef DEBUG
-               printf( "DRVSUP init VSAM card %1d found", i_card );
-             #endif
-          }
-          else {
-            ai_cards_found--;
-            p_VSAM[i_card] = 0;
-            CNFG_as[i_card].pVSAM = 0;
-	  }
-       }/* End of if */    
+    for( pcard=(VSAM_ID)ellFirst((ELLLIST *)&VSAM_card_list); pcard; pcard = (VSAM_ID)ellNext((ELLNODE *)pcard)) 
+    {
+       status = VSAM_init( pcard );
+       if ( status==OK )  {
+	  pcard->present = 1;
+          if (VSAM_DRV_DEBUG) 
+             printf( "VSAM: card %d initialized successfully at %p (A24)\n\n", pcard->card,pcard->pVSAM );
+          ai_cards_found++;
+       }
+       else {
+          printf( "DRVSUP: VSAM card %d found, initialization failed\n", pcard->card);
+       } 
     } /* End of i_card FOR loop */  
-    return( OK );
+
+    return( status );
 }
 
-/*
- * VSAM_init - set all VSAM's to normal (slow) scan, analog channel data.
- * This function should be called from a vxWorks
- * script prior to invoking iocInit. 
- */
-int VSAM_init( long *base_addr,short num_cards, short first )
+
+/***************************************************************************************************************************/
+/*  Routine: VSAM_config                                                                                                   */
+/*                                                                                                                         */
+/*  Purpose: Register a new VSAM ADC module                                                                                */
+/*                                                                                                                         */
+/*  Description:                                                                                                           */
+/*                                                                                                                         */
+/*  Checks all parameters, then creates a new card structure, initializes it and adds it to the end of the linked list.    */
+/*                                                                                                                         */
+/*  SYNOPSIS: int VSAM_create(                                                                                             */
+/*                  UINT16 cardNo,        Unique Identifier                                                                */
+/*                  UINT16 baseAddr,      A24 Base Address )                                                               */
+/*  Example:                                                                                                               */
+/*            VSAM_config(0,0x40000)                                                                                       */
+/***************************************************************************************************************************/
+
+int VSAM_config( short card, unsigned long addr)
 {
-     int           status=OK;
-     size_t        bcnt;
-     unsigned long ioBase;
-     int           nelm;
-#ifdef __rtems__
-     volatile unsigned long  *pCpuAddr;
-     volatile unsigned long  **ppPhysicalAddr;
-     epicsAddressType type = atVMEA24;              /* A24/D32 address space */
-#else
-     unsigned int     type = VME_AM_STD_SUP_DATA;   /* A24/D32 address space */
-#endif
-     short         i_card;
-     short         n_cards = first + num_cards;
-     VSAMMEM     **ppcards_present = NULL;
-     VSAMMEM      *pVSAM = NULL;  
+    int               status=ERROR;
+    size_t            len = sizeof(VSAMCNFG); 
+    unsigned long     ioBase = 0;
+    epicsAddressType  space = atVMEA24;   /* A24/D32 address space */
+    char              name_c[40];
+    VSAM_ID           pcard = NULL;
 
-    /* 
-     * Allocal memory to store information about
-     * all VSAM modules found in this ioc.
-     */
-     if ( !p_VSAM ) {
-       if ( num_cards>0 ) { 
-         ai_num_cards = min(num_cards,VSAM_MAX_CARDS);
-       }
 
-       /* Allocate array of pointers for module base address */
-       bcnt   = sizeof(*p_VSAM);
-       nelm   = ai_num_cards;
-       ppcards_present = (VSAMMEM **) calloc(nelm,bcnt);
-       if ( !ppcards_present ) return( ERROR );
-       p_VSAM = ppcards_present; 
-     }
-     else if ( num_cards+first > ai_num_cards ) {
-       return(ERROR);
-     }
-     else {
-       ppcards_present = p_VSAM;
-     }
+    if(!card_list_inited)
+    {
+        /* Initialize linked list */
+        ellInit( (ELLLIST *) &VSAM_card_list);
+        card_list_inited = 1;
+        if(VSAM_DRV_DEBUG) 
+          printf("The size of VSAM Memory Map is %d\n", (int)sizeof(VSAMMEM));
+    }
 
-     /* map address of the VSAM card into the standard address space */
-#ifdef __rtems__
-      pCpuAddr= (volatile unsigned long *)pVSAM;
-      ppPhysicalAddr = &pCpuAddr;
-      status = BSP_vme2local_adrs(type,(size_t)base_addr,(unsigned long *)ppPhysicalAddr);
-      if (status) {
-        status =  S_dev_addrMapFail;
-    	printf( "VSAM_init: A24 address 0x%08lx is invalid",(long unsigned int)base_addr);
-   	return( status );
-     }
-#else
-     status = sysBusToLocalAdrs(type,(char *)base_addr,(char **)&pVSAM);
-     if(status != OK){
-        logMsg( "VSAM_init: A24 address 0x%08lx is invalid",
-              (long unsigned int)base_addr,0,0,0,0,0 );
-        return( status );
-     }
-#endif
 
-     /* mark each VSAM found into the card present array */
-     for (i_card=first,status=OK; i_card<n_cards; i_card++, ppcards_present++) {
-       if ( *ppcards_present != 0 )
-         printf("VSAM_init: Card %hd already initialized",i_card);
-       else {
-         ioBase = (unsigned long)base_addr + (sizeof(VSAMMEM) * i_card);
-        *ppcards_present          = pVSAM;  /* address of VSAM card found  */
-         CNFG_as[i_card].pVSAM    = pVSAM;
-         CNFG_as[i_card].bus_addr = ioBase;
-         CNFG_as[i_card].present  = TRUE;
-         ai_cards_found++;                  /* keep track of cards found */
-       }
-     }/* End if i_card FOR loop */
+    /* Check card number for duplicate */
+    if ( VSAM_getByCard( card ) ) {
+        errlogPrintf ("VSAM Create: %hd already existed!\n", card);
+        return(status);
+    }
+    /* Check address for duplicate */
+    if ( VSAM_getByAddr(addr) ) {
+        errlogPrintf ("VSAM Create: 0x%lx already existed!\n", addr);
+        return(status);
+    }
 
-     return( status );
+    /* Allocate memory for VSAM card */
+    pcard = callocMustSucceed(1, len,"VSAM_create");
+    sprintf(name_c,"VSAM-%.2hd",card );
+    status = devRegisterAddress(name_c, space, addr, sizeof(VSAMMEM),(void *)&pcard->pVSAM);
+    if ( status == OK ) 
+    {
+      pcard->card       = card;
+      pcard->bus_addr   = addr;
+      ellAdd( (ELLLIST *)&VSAM_card_list, (ELLNODE *)pcard);
+      pcard->registered = 1;
+      status = OK;
+    }
+    else
+    {
+      status =  S_dev_addrMapFail;
+      errlogPrintf("VSAM card %d at A24 bus addr=0x%lx local addr=0x%lx is invalid",card,addr,ioBase);
+      free(pcard);
+    }
+    return status;
+}
+
+/*****************************************************************/
+/* Find VSAM by card number from link list                       */
+/*****************************************************************/
+static VSAM_ID VSAM_getByCard( short  card )
+{
+    VSAM_ID  pcard = NULL;
+
+    if( !card_list_inited ) return NULL;
+
+    for(pcard=(VSAM_ID)ellFirst((ELLLIST *)&VSAM_card_list); pcard; pcard = (VSAM_ID)ellNext((ELLNODE *)pcard))
+    {
+      if ( pcard->card==card ) break;
+    }
+
+    return pcard;
+}
+
+/****************************************************************/
+/* Find VSAM by base address from link list                     */
+/****************************************************************/
+static VSAM_ID VSAM_getByAddr(unsigned long addr)
+{
+    VSAM_ID  pcard = NULL;
+
+    if(!card_list_inited)   return NULL;
+
+    for(pcard=(VSAM_ID)ellFirst((ELLLIST *)&VSAM_card_list); pcard; pcard = (VSAM_ID)ellNext((ELLNODE *)pcard))
+    {
+        if ( pcard->bus_addr==addr ) break;
+    }
+    return pcard;
 }
 
 
@@ -214,135 +210,164 @@ int VSAM_init( long *base_addr,short num_cards, short first )
  * VSAM_present - probe VSAM memory location to 
  * verify if card is in crate. 
  */
-int VSAM_present( short card,VSAMMEM *pVSAM )
+int VSAM_present( short card, VSAMMEM *pVSAM )
+{ 
+     int         status;
+     long        found = 0;
+     VSAM_ID     pcard = NULL;
+
+      pcard = VSAM_getByCard( card );
+      if ( pcard ) {
+        status = VSAM_init( pcard );
+        if (status==OK)
+          found = 1;
+     }
+     return(found);
+}
+
+/*
+ * VSAM_init - initialize the VSAM module.
+ */
+int   VSAM_init( VSAM_ID pcard )
 {
-     int	     status;
-     int             found = FALSE;
-     long            lval;
+     int	     status = OK;
+     unsigned long   val;
+     short           chan;
+     unsigned        len  = sizeof(val);
+     VSAMMEM        *pVSAM = NULL;
+     volatile uint32_t *ptr=NULL;
 #ifdef __rtems__
      double          nsec  = 0.2;
-     unsigned        wcnt  = sizeof(lval)>>1;
 #else
-     int             bcnt  = sizeof(lval);
-     int             nticks;
-     int             mode  = VX_READ;
+     int             nticks = CLOCKS_PER_SEC/10;
 #endif
-     short           chan;
-     VSAMCNFG       *pCNFG = &CNFG_as[card];
-     int             attempts=0;
 
-     /*   status = devReadProbe(wcnt,(void*)pVSAM,(void*)&lval); */
+     if (!pcard) return(ERROR);
+
+     pVSAM = pcard->pVSAM;
+     /*    val   = in_be32( (volatile uint32_t *)pVSAM );
+	   printf("VSAM init: ch0=0x%lx\n",val); */
+    
+     status = devReadProbe(len,(volatile void *)pVSAM,(void*)&val); 
+     if (status) {
+        errlogPrintf(noCard_c,(int)pcard->card,(int)pVSAM,0,0,0,0);
+        return(status);
+     }   
+    
+     if (VSAM_DRV_DEBUG) {
+       errlogPrintf(cardFound_c,(int)pcard->card,(int)pVSAM,0,0,0,0);
+     }
+
+    /* Before doing anything, ensure that data and registers 
+       are initially zero, because we have seen the case where
+       garbage is present in vsam records after a reboot. 
+       If a '1' happens to be in the "little endian" bit, we
+       know that this will overwrite the CALIB SUCCESS state in
+       the status register for as long as the "little endian" bit
+       is held high, regardless of the processing of the CALIBRATION
+       bit at 1 Hz.                         dayle 29mar2002
+     */
+     if (VSAM_DRV_DEBUG) { 
+       printf("\nBefore the clear\n");
+       VSAM_testMem( (const VSAMMEM *)pVSAM );
+     }
+     VSAM_clear( pVSAM );
+     if (VSAM_DRV_DEBUG) { 
+        printf("\nAfter the clear\n");
+        VSAM_testMem( (const VSAMMEM *)pVSAM );
+        printf("\n");
+     }
+
+    /* 
+     * Set mode to read revision. Allow time for
+     * the revision to appear in memory after
+     * the mode has been set. Remember that
+     * the version number is returned in a
+     * channels in floating point format. 
+     * NOTE:D1 must be cleared to resume
+     * analog processing
+     *
+     * dayle changed this from '=' to 
+     *                           "|=" to not wipe out anything 
+     *  already set. 03/28/02 
+     *
+     */
+     val = in_be32((volatile uint32_t *)&pVSAM->mode_control); 
+     val |= SET_FIRMWARE;
+     out_be32((volatile uint32_t *)&pVSAM->mode_control,val);
+
+
 #ifdef __rtems__
-     status = bspExtMemProbe ((void*)pVSAM, 0, wcnt,(void *)&lval); 
-     if (status!=RTEMS_SUCCESSFUL) {
-        return S_dev_noDevice;
-        printf(noCard_c,(int)card,(int)pVSAM);
+     if (VSAM_DRV_DEBUG)
+        printf("Wait of %f seconds before reading fw version\n",nsec);
+     status = rtems_task_wake_after(nsec);         
+#else
+     taskDelay(nticks);  /* Luchini, changed from 1 tick to 10 on 05/09/01 */
+#endif
+     for ( chan=0,ptr=(volatile uint32_t *)pVSAM->data; chan<VSAM_NUM_CHANS; chan++,ptr++ ) { 
+          pcard->fw_version[chan] = in_be32(ptr);
+     }
+
+    /* 
+     * Reset the MODE CONTROL register to 
+     * normal scan, analog data and big-endian mode.
+     */
+     out_be32((volatile uint32_t *)&pVSAM->mode_control,0);
+     status = OK;
+  
+     VSAM_calibrateCheck( pVSAM );
+     return( status );
+}
+
+static int VSAM_calibrateCheck( VSAMMEM *pVSAM )
+{
+   int     status = OK;
+   int     attempts=0;
+   unsigned long val;
+   unsigned long calib=0;
+#ifdef __rtems__
+   double  nsec = 1.0;
+#else
+  int      nticks=60;
+#endif
+
+    /* Dayle added check that it's calibrated and if not, wait for it
+       on 03/19/02. 
+       In all my testing, CALIB SUCCESS was ALWAYS true at this point
+       so this code could be removed. dayle 03/29/02
+     */     
+    /* then the calibration bit is set, so fine */ 
+     val = in_be32((volatile uint32_t *)&pVSAM->status);
+     if ( val & CALIB_SUCCESS ){
+        if (VSAM_DRV_DEBUG)  
+           printf("Calibration bit is set. Proceed as normal.\n"); 
      }
      else {
-        status = OK;
-        printf(cardFound_c,card,(unsigned long)pVSAM);
-#else
-     status = vxMemProbe((char *)pVSAM,mode,bcnt,(char *)&lval)
-     if ( status !=OK ) {
-        logMsg(noCard_c,(int)card,(int)pVSAM,0,0,0,0);
-     }
-     else {
-        logMsg(cardFound_c,(int)card,(int)pVSAM,0,0,0,0);
-#endif
-       /* Before doing anything, ensure that data and registers 
-          are initially zero, because we have seen the case where
-          garbage is present in vsam records after a reboot. 
-          If a '1' happens to be in the "little endian" bit, we
-          know that this will overwrite the CALIB SUCCESS state in
-          the status register for as long as the "little endian" bit
-          is held high, regardless of the processing of the CALIBRATION
-          bit at 1 Hz.                         dayle 29mar2002 */
-
-        #ifdef DEBUG
-            printf("Before the clear");
-            VSAM_testMem( pVSAM );
-        #endif
-
-        VSAM_clear( pVSAM );
-
-        #ifdef DEBUG
-            printf("After the clear");
-            VSAM_testMem( pVSAM );
-        #endif
-
-       /* 
-        * Set mode to read revision. Allow time for
-        * the revision to appear in memory after
-        * the mode has been set. Remember that
-	* the version number is returned in all
-	* channels in floating point format. 
-	* NOTE:D1 must be cleared to resume
-	* analog processing
-        *
-        */ 
-   	pVSAM->mode_control |= SET_FIRMWARE; /* dayle changed this from '=' to 
-                                                "|=" to not wipe out anything 
-                                                already set. 03/28/02 */
-        /* Luchini, changed from 1 tick to 10 on 05/09/01 */
+       /* then the calibration bit is not set, so retry */
+       for (attempts=0; !calib && (attempts<10); attempts++) {
+	 val= in_be32((volatile uint32_t *)&pVSAM->status);
+         if (val &= CALIB_SUCCESS){ 
+           printf("Calibration: status register = 0x%lx\n",val);
+           calib=1;
+           status = OK;
+	 }
 #ifdef __rtems__
-        status = rtems_task_wake_after(nsec);
-        if(status != RTEMS_SUCCESSFUL){
-           printf("rtems_task_wake_after %s\n", rtems_status_text (status));
-	}
+           rtems_task_wake_after (nsec);
 #else
-        nticks = CLOCKS_PER_SEC/10;
-        nticks = max(1,nticks);
-        taskDelay(nticks);  /* Luchini, changed from 1 tick to 10 on 05/09/01 */
+           taskDelay(nticks);
 #endif
-        for ( chan=0; chan<VSAM_NUM_CHANS; chan++ ) { 
-          pCNFG->fw_version[chan] = pVSAM->data[chan];
-	}
-        found = TRUE; 
+       }/* End of FOR statement */ 
 
-       /* 
-	* Reset the MODE CONTROL register to 
-        * normal scan, analog data and big-endian mode.
-        */
-   	pVSAM->mode_control = 0;
-
-       /* Dayle added check that it's calibrated and if not, wait for it
-          on 03/19/02. 
-          In all my testing, CALIB SUCCESS was ALWAYS true at this point
-          so this code could be removed. dayle 03/29/02*/
-        #ifdef DEBUG
-           printf("pVSAM->status is %d",(pVSAM->status));
-        #endif
-        if (pVSAM->status & CALIB_SUCCESS){
-           /* then the calibration bit is set, so fine */ 
-           printf("Calibration bit is set. Proceed as normal."); 
-        }
-        else {
-           /* then the calibration bit is not set, so retry */
-           attempts = 0;
-
-#ifdef __rtems__
-           nsec = 1.0;
-#else
-           nticks=60;
-#endif
-           while (!(pVSAM->status & CALIB_SUCCESS) || (attempts<10)) {
-#ifdef __rtems__
-               status = rtems_task_wake_after (nsec);
-#else
-               taskDelay(nticks);
-#endif
-               attempts++;
-           }/* End of while statement */ 
-           if (attempts==10) {
-               printf("Waited 10 seconds for calibration to complete. Gave up.");
-           }
-           else {
-               printf("Detected calibration successful after %2d seconds",attempts);
-           }
-       }/* end of if */ 
-    }
-
-    return( found );
+       if (!calib) {
+         if (VSAM_DRV_DEBUG)
+            printf("Waited 10 seconds for calibration to complete and finally gave up.\n");
+         status = ERROR;
+       }
+       else {
+         printf("Detected calibration successful after %2d seconds\n",attempts);
+       }
+     }/* end of if */ 
+     return( status );
 }
 
 
@@ -350,34 +375,49 @@ int VSAM_present( short card,VSAMMEM *pVSAM )
 int VSAM_clear( VSAMMEM *pVSAM )
 {
     int i;
-    unsigned long *ptr;
+    volatile uint32_t *ptr=NULL;
+#ifdef __rtems__
+   double  nsec = 2.0;
+#else
+  int      nticks=120;
+#endif
 
-    for (i=0; i<32; i++) {
-        pVSAM->data[i] = 0.0;
+    for (i=0,ptr=(volatile uint32_t *)pVSAM->data; i<32; i++,ptr++) {
+      out_be32(ptr,0);
     }
 
-    ptr = (unsigned long *) pVSAM->range;
-    /* There are 32 range values of type char, but they are accessed
-       via A24/D32 address space */
-    for (i=0; i<8; i++) {
-        *ptr = 0;  
-        ptr++;
+    /* There are 32 range values of type char, but they are accessed via A24/D32 address space */
+    for (i=0,ptr=(volatile uint32_t *)pVSAM->range ; i<8; i++,ptr++) {
+        out_be32(ptr,0);  
     }
 
-    ptr = (unsigned long *) pVSAM->ac;
-    /* There are 32 ac values of type short, but they are accessed
-       via A24/D32 address space */
-    for (i=0; i<16; i++) {
-        *ptr = 0; 
-        ptr++;
+    /* There are 32 ac values of type short, but they are accessed via A24/D32 address space */
+    for (i=0,ptr=(volatile uint32_t *)pVSAM->ac; i<16; i++,ptr++) {
+        out_be32(ptr,0); 
     }
-    pVSAM->reset = 0;
-    pVSAM->mode_control = 0;
+    /* 2 seconds after a reset valid data is available */
+    out_be32((volatile uint32_t *)&pVSAM->reset,0);
+#ifdef __rtems__
+     if (VSAM_DRV_DEBUG)
+       printf("Wait of %f seconds after reset\n",nsec);
+     rtems_task_wake_after (nsec);
+#else
+    taskDelay(nticks);
+#endif
+
+    /* 
+     * D0: 0= Normal channel scan, 1= Fast scan mode 
+     * D1: 0= Normal analog channel data, 1= Z80 Firmware revision number is present in channel buffer
+     * D2: 0= Big endian mode, 1= Little endian mode
+     * D3: 0= Internal Calibration failed, 1= Internal calibration successful
+     */
+    out_be32((volatile uint32_t *)&pVSAM->mode_control,0);
+
     /* Note: can't zero status register because it's read-only */
-    pVSAM->pad = 0;
-    pVSAM->diag_mode = 0;
+    out_be32((volatile uint32_t *)&pVSAM->pad,0);
+    out_be32((volatile uint32_t *)&pVSAM->diag_mode,0);
     for (i=0; i<3; i++) {
-        pVSAM->padding[i] = 0;
+        out_be32((volatile uint32_t *)&pVSAM->padding[i],0);
     } 
     return OK;
 }
@@ -388,42 +428,33 @@ int VSAM_clear( VSAMMEM *pVSAM )
 /* 
  * verifyVSAM - check validity of card, channel, and other parameters.
  */
-int verifyVSAM( short  card,short channel,char   parm)
+int verifyVSAM( short  card, short channel,char   parm)
 {
-	VSAMMEM		*pVSAM;
+  int        status;
+     VSAM_ID    pcard = NULL;
 
-    if ((card >= ai_num_cards) || (card < 0)) {
-#ifdef DEBUG
-	printf(cardNotFound_c,card);
-#endif
-	return(-1);
-    }
+
     /* verify that specified card is present */
-    pVSAM = p_VSAM[card];
-    if (pVSAM == 0) {
-#ifdef DEBUG
-	printf(cardNotFound_c,card);
-#endif
-	return(1);
+    pcard = VSAM_getByCard( card );
+    if ( pcard && pcard->present ) {
+      if ((channel >= VSAM_NUM_CHANS+4) || (channel < 0)) {
+	if (VSAM_DRV_DEBUG>1) printf(chanOutOfRange,VSAM_NUM_CHANS,channel);
+	status = -2;
+      }
+      else if ((parm == RANGE_TYPE) || (parm == DATA_TYPE) || (parm == AC_TYPE) || (parm == CSR_TYPE))
+      {
+	status = OK;
+      }
+      else {
+         status = -2;
+	 if (VSAM_DRV_DEBUG) printf(invParam_c,parm);
+      }
     }
-    if ((channel >= VSAM_NUM_CHANS+4) || (channel < 0)) {
-#ifdef DEBUG
-	printf(chanOutOfRange,VSAM_NUM_CHANS,channel);
-#endif
-	return(-2);
+    else {
+      status = 1;
+      if (VSAM_DRV_DEBUG) printf(cardNotFound_c,card);
     }
-    if ((channel < VSAM_NUM_CHANS) &&
-	(parm != RANGE_TYPE)        && 
-        (parm != DATA_TYPE)         && 
-        (parm != AC_TYPE))
-    {
-#ifdef DEBUG
-	printf(invParam_c,parm);
-#endif
-	return(-2);
-    }
-
-    return(0);
+    return(status);
 }
 
 /*
@@ -476,17 +507,26 @@ int bo_VSAM_read( short	        card,
                   unsigned long	mask,
                   unsigned long	*pval )
 {
-	VSAMMEM		*pVSAM;
+    int        status = OK;
+    VSAMMEM   *pVSAM = NULL;
+    unsigned long val=0;
 
-    if (channel == MODE_CHANNEL) {
-	pVSAM = p_VSAM[card];
-	if (pVSAM == 0) return -1;
-	*pval = pVSAM->status & mask;
-    }
-    else {
+
+    status = VSAM_get_adrs( card,&pVSAM );
+    if ( status == OK ) {
+      if (channel == MODE_CHANNEL) {
+	if (pVSAM == 0)  
+           status = ERROR;
+        else {
+	  val   = in_be32((volatile uint32_t *)&pVSAM->status);
+          *pval = val & mask;
+	}
+      }
+      else {
 	*pval = 0;
+      }
     }
-    return(0);
+    return(status);
 }
 
 /*
@@ -535,9 +575,7 @@ int translateVSAMChannel(short    channel,
 	case AC_TYPE:
 	    rpvt = malloc(sizeof(VSAMPVT));
 	    if (rpvt == NULL) {
-#ifdef DEBUG
-	printf( invRange_c );
-#endif
+	        if (VSAM_DRV_DEBUG) printf( invRange_c );
 		return -2;
 	    }
 	    translateVSAMChannel(channel, RANGE_TYPE, rpvt);
@@ -573,6 +611,7 @@ int ai_VSAM_read( short	    card,
                   VSAMPVT  *ppvt,
                   float	   *prval)
 {
+    int              status = OK;
     unsigned long    rlong;
     short	     rshort;
     float	     rfloat;
@@ -581,11 +620,11 @@ int ai_VSAM_read( short	    card,
     VSAMMEM         *pVSAM;
 
 
-    pVSAM = p_VSAM[card];
-    if (pVSAM == 0) return -1;
+    status = VSAM_get_adrs( card,&pVSAM );
+    if ( status ==OK ) {
 
-    /* VSAM is D32 only, so bytes and shorts must be extracted here */
-    switch ((int)type) {
+      /* VSAM is D32 only, so bytes and shorts must be extracted here */
+      switch ((int)type) {
 	case RANGE_TYPE:
 	    return(getVSAMRange(pVSAM, ppvt, prval));
 	    break;
@@ -601,18 +640,20 @@ int ai_VSAM_read( short	    card,
 	    dfactor = (double)rfloat/(double)AC_DIVISOR;
 
 	    /* now get AC measurement */
-	    rlong  = *(unsigned long *)&pVSAM->ac[ppvt->lchan];
+	    rlong  = in_be32((volatile uint32_t *)&pVSAM->ac[ppvt->lchan]);
 	    rshort = (short)((rlong & ppvt->mask) >> ppvt->shift);
 	    dpp    = dfactor * (double)rshort;
 	    *prval = (float)dpp;
 	    break;
 
 	default:
-	    rfloat = pVSAM->data[channel];
-	    *prval = rfloat;
+	    /* rfloat = (float)in_be32((volatile uint32_t *)&pVSAM->data[channel]); */ /* This line is incorrect?  Dereferencing a float as a uint32_t. */
+	    rfloat = pVSAM->data[channel]; /* pVSAM->data[channel] is already a float */
+	    *prval = rfloat; 
 	    break;
+      }
     }
-    return(0);
+    return(status);
 }
 
 /*
@@ -628,7 +669,7 @@ int getVSAMRange( VSAMMEM  *pMem,
                                      0.32,  0.16, 0.08, 0.04, 0.02, 
                                      0.01 };
 
-    rlong = *(unsigned long *)&pMem->range[ppvt->lchan];
+    rlong = in_be32((volatile uint32_t *) &pMem->range[ppvt->lchan] );
     i_range = (char)((rlong & ppvt->mask) >> ppvt->shift);
     if ( i_range>MAX_RANGE_BYTE ) 
       status = -1;
@@ -646,28 +687,30 @@ int input_VSAM_driver( short           card,
                        unsigned long   mask,
                        unsigned long  *pval)
 {
+    int                 status=OK;
     unsigned long	lval = 0;
     VSAMMEM		*pVSAM;
 
-    pVSAM = p_VSAM[card];
-    if (pVSAM == 0) return -1;
 
-    if (lchan < VSAM_NUM_CHANS) {
+    status = VSAM_get_adrs( card,&pVSAM );
+    if ( status ==OK ) {
+      if (lchan < VSAM_NUM_CHANS) {
 	if (type == RANGE_TYPE) {
-	    lval = *(unsigned long *)&pVSAM->range[lchan];
+	  lval = in_be32((volatile uint32_t *)&pVSAM->range[lchan]);
 	}
 	else if (type == AC_TYPE) {
-	    lval = *(unsigned long *)&pVSAM->ac[lchan];
+	  lval = in_be32( (volatile uint32_t *)&pVSAM->ac[lchan]);
 	}
 	else {
 	   return(-2);
 	}
+      }
+      else {
+	  lval = in_be32((volatile uint32_t *)&pVSAM->status);
+      }
+      *pval = lval & mask;
     }
-    else {
-	lval = pVSAM->status;
-    }
-    *pval = lval & mask;
-    return(0);
+    return(status);
 }
 
 /*
@@ -678,34 +721,37 @@ int output_VSAM_driver( short		card,
                         unsigned long	mask,
                         unsigned long	*pval)
 {
-	unsigned long	sval,
-			lval,
-			rval;
-	VSAMMEM		*pVSAM;
+    int            status=OK;
+    unsigned long   sval,
+		    lval,
+		    rval;
+    VSAMMEM         *pVSAM = NULL;
 
-    pVSAM = p_VSAM[card];
-    if (pVSAM == 0) return -1;
 
-    switch ((int)channel) {
+    status = VSAM_get_adrs( card,&pVSAM );
+    if ( status ==OK ) {
+      switch ((int)channel) {
 	case RESET_CHANNEL:
-	    pVSAM->reset = 0;
+	    out_be32((volatile uint32_t *)&pVSAM->reset, 0);
 	    break;
 	case DIAG_CHANNEL:
-	    pVSAM->diag_mode = 0;
+	    out_be32((volatile uint32_t *)&pVSAM->diag_mode,0);
 	    break;
 	default:
 	    /* Only three bits of mode control register are used */
-	    sval = pVSAM->status & MODE_MASK;
+	    sval = in_be32((volatile uint32_t *)&pVSAM->status);
+	    sval &= MODE_MASK;
 	    rval = *pval;
 	    if (mask == MODE_MASK) lval = rval & mask;	/* multi-bit output */
 	    else {
 		if (rval & mask) lval = sval | mask;	/* set single bit */
 		else lval = sval & ~mask;		/* clear single bit */
 	    }
-	    pVSAM->mode_control = lval;
+	    out_be32((volatile uint32_t *)&pVSAM->mode_control,lval);
 	    break;
+      }
     }
-    return(0);
+    return(status);
 }
 
 /* Driver report routines */
@@ -721,27 +767,28 @@ static long report(int	level)
  */
 long VSAM_io_report( char level )
 {
-    short	i;
-    VSAMMEM     *pMem = NULL;
+    VSAM_ID     pcard = NULL;
+    VSAMMEM    *pVSAM = NULL;
 
-
-    if ( !ai_num_cards ) {
+    if ( ai_cards_found ) {
         printf("No VSAM Modules present\n");
         return(OK);
     }
-    for (i = 0; i < ai_num_cards; i++) {
-      if (p_VSAM[i]) {
-          if (level == 0 )
-	      printf("VSAM:\tcard %hd\tA24: 0x%06lx\n", i, (unsigned long)p_VSAM[i]);
-	  else if (level == 1) 
-	      VSAM_rval_report(i,0);
-	  else if (level==2)
-              VSAM_rval_report(i,1);
-          else {
-              pMem = p_VSAM[i];
-	      printf("VSAM:\tcard %hd\tA24: 0x%06lx\t status: 0x%08lx\n", 
-                     i, (unsigned long)pMem, (unsigned long)pMem->status);
-	  }
+
+    for(pcard=(VSAM_ID)ellFirst((ELLLIST *)&VSAM_card_list); pcard; pcard = (VSAM_ID)ellNext((ELLNODE *)pcard))
+    {
+      if (level == 0 )
+	 printf("VSAM:\tcard %hd\tA24: 0x%06lx\n", pcard->card, (unsigned long)pcard->bus_addr);
+       else if (level == 1) 
+	  VSAM_rval_report(pcard->card,0);
+       else if (level==2)
+          VSAM_rval_report(pcard->card,1);
+      else {
+	pVSAM = pcard->pVSAM;
+	 printf("VSAM:\tcard %hd\tA24: %p\t status: 0x%x\n", 
+                 pcard->card, 
+                 pcard->pVSAM, 
+                 in_be32((volatile uint32_t *)&pVSAM->status));
       }
     }/* End of FOR loop */
     return OK;
@@ -749,29 +796,41 @@ long VSAM_io_report( char level )
 
 /*
  * VSAM_rval_report - report raw analog data, range, and AC measurement
- *			for each channel.
+ *		      for each channel.
  * 
  * called by VSAM_io_report() if level is 1
  */
 void VSAM_rval_report( short int card, short int flag )
 {
-    short	    i;
-    double          version_base=0.0;
-    double          version_frac=0.0;
-    VSAMMEM	    *pMem  = p_VSAM[card];
-    VSAMCNFG        *pCnfg = &CNFG_as[card];
+    short	      i;                 /* channel index */
+    double            val;
+    double            version_base=0.0;
+    double            version_frac=0.0;
+    VSAM_ID           pcard=NULL;
+    VSAMMEM           *pVSAM=NULL;
+    volatile uint32_t *ptr=NULL;
 
-
-    printf("STATUS reg: 0x%08lx\n",(unsigned long)pMem->status);
-    for (i=0; i<VSAM_NUM_CHANS; i++) {
-        if ( flag ) {
-           version_frac  = modf((double)pCnfg->fw_version[i],&version_base); 
+     pcard = VSAM_getByCard( card );
+     if ( pcard && pcard->present ) {
+       pVSAM = pcard->pVSAM;
+       printf("STATUS reg: 0x%x\n",in_be32((volatile uint32_t *)&pVSAM->status)); 
+       for (i=0,ptr=(volatile uint32_t *)pVSAM->data; i<VSAM_NUM_CHANS; i++,ptr++)
+       {
+         if ( flag ) {
+           version_frac  = modf((double)pcard->fw_version[i],&version_base); 
+           val = (double)in_be32(ptr);
 	   printf("\tch %2hd: data %e\t firmware ver: %d\n", 
-               i, pMem->data[i],(int)version_base);
+                  i, 
+                  val,
+                  (int)version_base);
 	}
-        else
-	   printf("\tch %2hd: data %e\n",i, pMem->data[i]);
-    }
+	 else
+	 {
+           val = (double)in_be32(ptr);
+	   printf("\tch %2hd: data %e\n",i, val);
+	 }
+      }/* End of Channel FOR loop */
+    }/* End of linked list FOR loop */
 }
 
 
@@ -780,26 +839,27 @@ void VSAM_rval_report( short int card, short int flag )
  */
 int VSAM_get_adrs( short card,VSAMMEM **ppVSAM )
 {
-    int status = ERROR;
-    if ((card >= ai_num_cards) || (card < 0)) return(status);
+    int       status = OK;
+    VSAM_ID   pcard = NULL;
 
-    /* verify that specified card is present */
-    if ( p_VSAM[card] ) 
+
+    *ppVSAM = NULL;
+
+    /* Get card information */    
+    pcard = VSAM_getByCard( card );
+    if (pcard && pcard->present )
     {
-       if ( !ppVSAM )
-         printf("VSAM Card %hd A24 Address 0x%8.8lx\n",
-                card,(unsigned long)p_VSAM[card]);
-       else 
-       {
-         *ppVSAM = p_VSAM[card];
-         status = OK;
-       }
+       *ppVSAM = pcard->pVSAM;
+    } 
+    else 
+    {
+      status = ERROR;
     }
     return(status);
 }
 
 /*
- * VSAM_getAdrs - return the VSAM card firmware veresion
+ * VSAM_version - return the VSAM card firmware veresion
  * 
  *  This function obtains the firmware version number from
  *  a local structure which is populated during the VSAM
@@ -808,20 +868,21 @@ int VSAM_get_adrs( short card,VSAMMEM **ppVSAM )
  */
 int VSAM_version( short card,unsigned short *pversion )
 {
-    int status = ERROR;
+    int      status = OK;
+    VSAM_ID  pcard = NULL;
 
-    if ((card >= ai_num_cards) || (card < 0))  return(status);
-
-     /* verify that specified card is present */
-    if ( CNFG_as[card].registered ) 
-    {
+    /* Get card information */    
+    pcard = VSAM_getByCard( card );
+    if ( !pcard || !pcard->present ) 
+        status = ERROR;
+    else {
       if ( !pversion ) 
          printf("VSAM Card %hd firmware version %f\n",
-                card,CNFG_as[card].fw_version[0]);
+                pcard->card,
+                pcard->fw_version[0]);
       else 
       {
-        *pversion = (unsigned short)CNFG_as[card].fw_version[0];
-         status = OK;
+        *pversion = (unsigned short)pcard->fw_version[0];
       }
     }
     return(status);

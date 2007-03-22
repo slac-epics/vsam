@@ -5,8 +5,11 @@
  *      Date:           03-29-02
  */
 #ifndef VSAMUTILS_H
+#define VSAMUTILS_H
 
-#include "VSAM.h"
+#ifdef __cplusplus
+extern "C" {
+#endif  /* __cplusplus */
 
 #define CHARAMASK (0x000000ff)
 #define CHARBMASK (0x0000ff00)
@@ -15,16 +18,17 @@
 #define SHORTAMASK (0x0000ffff)
 #define SHORTBMASK (0xffff0000)
 
+
 typedef struct {
     short a;
-    short b;    
+    short b;
 } VSAMSHORTS;
 
 typedef struct {
     char a;
-    char b;    
+    char b;
     char c;
-    char d;    
+    char d;
 } VSAMCHARS;
 
 int VSAM_testMem (const VSAMMEM * pVSAM);
@@ -38,5 +42,7 @@ int VSAM_setNormalScan(VSAMMEM * pVSAM);
 int VSAM_setFirmwareRev(VSAMMEM * pVSAM);
 int VSAM_setAnalogChData(VSAMMEM * pVSAM);
 
-#define VSAMUTILS_H
-#endif
+#ifdef __cplusplus
+}
+#endif  /* __cplusplus */
+#endif  /* VSAMUTILS_H */

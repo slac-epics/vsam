@@ -55,7 +55,7 @@ static long init_record(struct biRecord	*pbi)
 	card     = pvmeio->card;
 	channel  = pvmeio->signal;
 	bit_spec = pvmeio->parm[0];
-	if (verifyVSAM(card, channel, bit_spec) >= 0) {
+	if (verifyVSAM(card, channel, 'B') >= 0) {
 	  if (checkVSAMBi(channel, bit_spec) == OK) {
 	    if (getVSAMBitMask(channel, bit_spec, &mask) == OK) {
 	      pbi->mask = mask;
