@@ -1,0 +1,16 @@
+#==============================================================
+#
+#  Name: RELEASE_NOTES
+#
+#  Rem:  This file contains the the release notes for
+#        the VSAM module which has been modified at SLAC.
+#
+#        The initial version of this software written 
+#        by Susanna Jacobson from LBL and modified
+#        by Dayle Kotturi at SLAC.
+#
+#  Auth: 22-May-2007, K. Luchini         (LUCHINI)
+#  Rev:  dd-mmm-yyyy, Reviewer's Name    (USERNAME)
+#--------------------------------------------------------------
+#
+vsam-R1-0-0: Convert to RTEMS using EPICS OSI support.
