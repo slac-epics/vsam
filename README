@@ -30,5 +30,10 @@ dl                     DM Displays
 html                   Documentation
 src                    Driver and device support source code
 
+Dependencies
+-------------
+This VSAM Module support requires the vmeCardRecord support for the 
+VSAM Card device support.
+
 
 
