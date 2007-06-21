@@ -12,5 +12,10 @@
 #  Auth: 22-May-2007, K. Luchini         (LUCHINI)
 #  Rev:  dd-mmm-yyyy, Reviewer's Name    (USERNAME)
 #--------------------------------------------------------------
+#  Mod:
+#        dd-mmm-yyyy, First Lastname      (USERNAME)
+#          comment
+#
+#==============================================================
 #
 vsam-R1-0-0: Convert to RTEMS using EPICS OSI support.
