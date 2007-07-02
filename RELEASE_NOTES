@@ -13,9 +13,11 @@
 #  Rev:  dd-mmm-yyyy, Reviewer's Name    (USERNAME)
 #--------------------------------------------------------------
 #  Mod:
-#        dd-mmm-yyyy, First Lastname      (USERNAME)
-#          comment
+#        02-Jul-2007, K. Luchini         (LUCHINI):
+#          release R1-0-0
 #
 #==============================================================
 #
+vsam-R1-0-1: Build with miscUtils-R1-0-0
+
 vsam-R1-0-0: Convert to RTEMS using EPICS OSI support.

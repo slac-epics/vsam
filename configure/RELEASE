@@ -9,7 +9,7 @@ EPICS_MODULES=/afs/slac/g/lcls/build/epics/modules
 EPICS_BASE_RELEASE=/afs/slac/g/lcls/build/epics/base/base-R1-0-0
 
 VME_CARD_RECORD=$(EPICS_MODULES)/vmeCardRecord/vmeCardRecord-R1-0-1
-MISCUTILS=$(EPICS_MODULES)/miscUtils/Devl
+MISCUTILS=$(EPICS_MODULES)/miscUtils/miscUtils-R1-0-0
 
 # EPICS_BASE usually appears last so other apps can override stuff:
 EPICS_BASE=$(EPICS_BASE_RELEASE)
