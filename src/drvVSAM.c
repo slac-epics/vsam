@@ -770,7 +770,7 @@ long VSAM_io_report( char level )
     VSAM_ID     pcard = NULL;
     VSAMMEM    *pVSAM = NULL;
 
-    if ( ai_cards_found ) {
+    if ( !ai_cards_found ) {
         printf("No VSAM Modules present\n");
         return(OK);
     }
