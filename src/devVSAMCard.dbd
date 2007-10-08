@@ -1,2 +1,0 @@
-#-- VME Card
-device( vmeCard, VME_IO, devCardVSAM, "VSAM")
