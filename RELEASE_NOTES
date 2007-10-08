@@ -13,11 +13,19 @@
 #  Rev:  dd-mmm-yyyy, Reviewer's Name    (USERNAME)
 #--------------------------------------------------------------
 #  Mod:
+#        08-Jul-2007, K. Luchini         (LUCHINI):
+#          release vsam-R1-0-1
+#        26-Sep-2007, E. Williams        (ERNESTO):
+#          release vsam-R1-0-1
 #        02-Jul-2007, K. Luchini         (LUCHINI):
-#          release R1-0-0
+#          release vsam-R1-0-0
 #
 #==============================================================
 #
+vsam-R1-0-1: Build with base-R3-14-8-2-lcls2 (RTEMS 4.7.1)
+             Build with miscUtils-R1-0-1
+             Build with vmeCardRecord-R1-0-2
+
 vsam-R1-0-1: Build with miscUtils-R1-0-0
 
 vsam-R1-0-0: Convert to RTEMS using EPICS OSI support.
