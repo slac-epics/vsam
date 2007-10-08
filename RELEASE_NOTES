@@ -14,7 +14,8 @@
 #--------------------------------------------------------------
 #  Mod:
 #        08-Jul-2007, K. Luchini         (LUCHINI):
-#          release vsam-R1-0-1
+#          release vsam-R1-0-3
+#          release vsam-R1-0-2
 #        26-Sep-2007, E. Williams        (ERNESTO):
 #          release vsam-R1-0-1
 #        02-Jul-2007, K. Luchini         (LUCHINI):
@@ -22,7 +23,11 @@
 #
 #==============================================================
 #
-vsam-R1-0-1: Build with base-R3-14-8-2-lcls2 (RTEMS 4.7.1)
+vsam-R1-0-3: Build with base-R3-14-9-lcls1 (RTEMS-4.7.1)
+             Build with miscUtils-R1-0-2
+             Build with vmeCardRecord-R1-0-3
+
+vsam-R1-0-2: Build with base-R3-14-8-2-lcls2 (RTEMS 4.7.1)
              Build with miscUtils-R1-0-1
              Build with vmeCardRecord-R1-0-2
 
