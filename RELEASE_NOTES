@@ -13,6 +13,8 @@
 #  Rev:  dd-mmm-yyyy, Reviewer's Name    (USERNAME)
 #--------------------------------------------------------------
 #  Mod:
+#        23-Feb-2008, K. Luchini         (LUCHINI):
+#          release vsam-R1-0-3-1
 #        08-Jul-2007, K. Luchini         (LUCHINI):
 #          release vsam-R1-0-3
 #          release vsam-R1-0-2
@@ -23,6 +25,11 @@
 #
 #==============================================================
 #
+vsam-R1-0-3-1: Build with miscUtils-R1-0-2-1
+               Build with vmeCardRecord-R1-0-3-1
+               Replace CONFIG_APP with CONFIG_SITE
+               Add RELEASE_SITE
+
 vsam-R1-0-3: Build with base-R3-14-9-lcls1 (RTEMS-4.7.1)
              Build with miscUtils-R1-0-2
              Build with vmeCardRecord-R1-0-3
