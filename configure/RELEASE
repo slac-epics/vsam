@@ -2,14 +2,19 @@
 # Run "gnumake clean uninstall install" in the application
 # top directory each time this file is changed.
 
+include $(TOP)/RELEASE_SITE
+
+# If you don't want to install into $(TOP) then
+# define INSTALL_LOCATION_APP here
+#INSTALL_LOCATION_APP=<fullpathname>
 
 # =============================================================
 # Define the top of the EPICS tree for your site.
 # We will build some tools/scripts that allow us to
 # change this easily when relocating software.
 # ==============================================================
-EPICS_SITE_TOP=/nfs/slac/g/lcls/build/epics
-
+#EPICS_SITE_TOP=/nfs/slac/g/lcls/build/epics
+TEMPLATE_TOP=$(EPICS_BASE)/templates/makeBaseApp/top
 
 # =============================================================
 # Define location of module tree with respect to
@@ -17,25 +22,26 @@ EPICS_SITE_TOP=/nfs/slac/g/lcls/build/epics
 # =============================================================
 EPICS_MODULES=$(EPICS_SITE_TOP)/modules
 
+# ========================================================================================
+# If using macro substitutions, point MSI at the binary:
+EXTENSIONS_MODULE_VERSION=extensions-R3-14-9
+MSI=$(EPICS_SITE_TOP)/extensions/$(EXTENSIONS_MODULE_VERSION)/bin/$(EPICS_HOST_ARCH)/msi
+# ========================================================================================
 
 # ==============================================================
 # Define the version of EPICS BASE that you will use
 # =============================================================
 BASE_MODULE_VERSION=base-R3-14-9-lcls1
 
-
-
 # =============================================================
 # Define the version of modules needed by
 # IOC apps or other Support apps
 # =============================================================
-MISCUTILS_MODULE_VERSION=miscUtils-R1-0-2
-VME_CARD_RECORD_MODULE_VERSION=vmeCardRecord-R1-0-3
-
+MISCUTILS_MODULE_VERSION=miscUtils-R1-0-2-1
+VME_CARD_RECORD_MODULE_VERSION=vmeCardRecord-R1-0-3-1
 
 MISCUTILS=$(EPICS_MODULES)/miscUtils/$(MISCUTILS_MODULE_VERSION)
 VME_CARD_RECORD=$(EPICS_MODULES)/vmeCardRecord/$(VME_CARD_RECORD_MODULE_VERSION)
-
 
 # =================================================================
 # Define EPICS_BASE
