@@ -1,7 +1,6 @@
 #RELEASE Location of external products
 # Run "gnumake clean uninstall install" in the application
 # top directory each time this file is changed.
-
 include $(TOP)/RELEASE_SITE
 
 # If you don't want to install into $(TOP) then
@@ -24,21 +23,21 @@ EPICS_MODULES=$(EPICS_SITE_TOP)/modules
 
 # ========================================================================================
 # If using macro substitutions, point MSI at the binary:
-EXTENSIONS_MODULE_VERSION=extensions-R3-14-9
+EXTENSIONS_MODULE_VERSION=extensions-R3-14-8-2
 MSI=$(EPICS_SITE_TOP)/extensions/$(EXTENSIONS_MODULE_VERSION)/bin/$(EPICS_HOST_ARCH)/msi
 # ========================================================================================
 
 # ==============================================================
 # Define the version of EPICS BASE that you will use
 # =============================================================
-BASE_MODULE_VERSION=base-R3-14-9-lcls1
+BASE_MODULE_VERSION=base-R3-14-8-2-lcls3
 
 # =============================================================
 # Define the version of modules needed by
 # IOC apps or other Support apps
 # =============================================================
-MISCUTILS_MODULE_VERSION=miscUtils-R1-0-2-1
-VME_CARD_RECORD_MODULE_VERSION=vmeCardRecord-R1-0-3-1
+MISCUTILS_MODULE_VERSION=miscUtils-R2-0-0
+VME_CARD_RECORD_MODULE_VERSION=vmeCardRecord-R2-0-0
 
 MISCUTILS=$(EPICS_MODULES)/miscUtils/$(MISCUTILS_MODULE_VERSION)
 VME_CARD_RECORD=$(EPICS_MODULES)/vmeCardRecord/$(VME_CARD_RECORD_MODULE_VERSION)
@@ -48,3 +47,5 @@ VME_CARD_RECORD=$(EPICS_MODULES)/vmeCardRecord/$(VME_CARD_RECORD_MODULE_VERSION)
 # EPICS_BASE usually appears last so other apps can override stuff:
 # =================================================================
 EPICS_BASE=$(EPICS_SITE_TOP)/base/$(BASE_MODULE_VERSION)
+
+# End of file
