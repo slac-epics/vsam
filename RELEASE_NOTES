@@ -13,6 +13,8 @@
 #  Rev:  dd-mmm-yyyy, Reviewer's Name    (USERNAME)
 #--------------------------------------------------------------
 #  Mod:
+#        27-Apr-2009, K. Luchini         (LUCHINI):
+#          release vsam-R2-0-0
 #        23-Feb-2008, K. Luchini         (LUCHINI):
 #          release vsam-R1-0-3-1
 #        08-Jul-2007, K. Luchini         (LUCHINI):
@@ -25,6 +27,9 @@
 #
 #==============================================================
 #
+vsam-R2-0-0:   Build with epics-R3-14-8-2-lcls3
+               Build with rtems-4.9.1
+
 vsam-R1-0-3-1: Build with miscUtils-R1-0-2-1
                Build with vmeCardRecord-R1-0-3-1
                Replace CONFIG_APP with CONFIG_SITE
