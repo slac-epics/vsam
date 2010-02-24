@@ -36,8 +36,8 @@ BASE_MODULE_VERSION=base-R3-14-8-2-lcls3
 # Define the version of modules needed by
 # IOC apps or other Support apps
 # =============================================================
-MISCUTILS_MODULE_VERSION=miscUtils-R2-0-0
-VME_CARD_RECORD_MODULE_VERSION=vmeCardRecord-R2-0-0
+MISCUTILS_MODULE_VERSION=miscUtils-R2-1-0
+VME_CARD_RECORD_MODULE_VERSION=vmeCardRecord-R2-1-0
 
 MISCUTILS=$(EPICS_MODULES)/miscUtils/$(MISCUTILS_MODULE_VERSION)
 VME_CARD_RECORD=$(EPICS_MODULES)/vmeCardRecord/$(VME_CARD_RECORD_MODULE_VERSION)
