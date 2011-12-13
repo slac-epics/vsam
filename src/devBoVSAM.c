@@ -10,6 +10,9 @@
 #include        <recSup.h>
 #include	<devSup.h>
 #include        <recGbl.h>
+#if (EPICS_REVISION == 14 && EPICS_MODIFICATION >= 11)
+#include  "errlog.h"
+#endif
 #include	<boRecord.h>
 #include	"VSAM.h"
 #include        <epicsExport.h>

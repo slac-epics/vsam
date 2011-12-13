@@ -34,6 +34,9 @@
 #include   "devSup.h"         /* DEVSUPFUN, S_dev_badBus  */
 #include   "recGbl.h"         /* for recGblRecordError()  */
 #include   "errMdef.h"        /* global var errVerbose    */
+#if (EPICS_REVISION == 14 && EPICS_MODIFICATION >= 11)
+#include  "errlog.h"
+#endif
 #include   "vmeCardRecord.h"  /* struct vmeCardRecord     */
 #include   "VSAM.h"           /* VSAM_get_adrs(),etc      */
 #include   <epicsExport.h>
