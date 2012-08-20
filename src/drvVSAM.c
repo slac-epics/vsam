@@ -6,29 +6,6 @@
 
 #include <math.h>         /* for modf() */
 
-#ifdef __rtems__
-#include <rtems.h>
-#include <rtems/error.h>
-#include <bsp.h>
-#include <syslog.h>
-
-#if defined(__PPC__)
-#include <bsp/VME.h>
-#include <bsp/bspExt.h>
-#endif
-
-#else
-#include <vxWorks.h>
-#include <tickLib.h>
-#include <logLib.h>
-#include <vxLib.h>
-#include <sysLib.h>         /* for sysBusToLocalAdrs */
-#include <taskLib.h>
-#include <memLib.h>
-#include <vme.h>
-#include <time.h>           /* for CLOCKS_PER_SEC    */
-#endif
-
 #include        "dbDefs.h"
 #include        "errMdef.h"        /* errMessage()         */
 #include        "devLib.h"         /* devRegisterAddress() */
@@ -37,6 +14,7 @@
 #include	"VSAM.h"           /* VSAM_NUM_CHANS,etc   */
 #include        "VSAMUtils.h"      /* for VSAM_testMem()   */
 #include        "epicsExport.h"
+#include        "epicsThread.h"
 
 /* Messages - informational and error */
 static char *noCard_c    = "VSAM Card %hd not found at (A24) address 0x%8.8lx\n";
@@ -236,16 +214,12 @@ int   VSAM_init( VSAM_ID pcard )
      unsigned        len  = sizeof(val);
      VSAMMEM        *pVSAM = NULL;
      volatile uint32_t *ptr=NULL;
-#ifdef __rtems__
      double          nsec  = 0.2;
-#else
-     int             nticks = CLOCKS_PER_SEC/10;
-#endif
 
      if (!pcard) return(ERROR);
 
      pVSAM = pcard->pVSAM;
-     /*    val   = in_be32( (volatile uint32_t *)pVSAM );
+     /*    val   = in_be32( (volatile void *)pVSAM );
 	   printf("VSAM init: ch0=0x%lx\n",val); */
     
      status = devReadProbe(len,(volatile void *)pVSAM,(void*)&val); 
@@ -292,27 +266,23 @@ int   VSAM_init( VSAM_ID pcard )
      *  already set. 03/28/02 
      *
      */
-     val = in_be32((volatile uint32_t *)&pVSAM->mode_control); 
+     val = in_be32((volatile void *)&pVSAM->mode_control); 
      val |= SET_FIRMWARE;
-     out_be32((volatile uint32_t *)&pVSAM->mode_control,val);
+     out_be32((volatile void *)&pVSAM->mode_control,val);
 
 
-#ifdef __rtems__
      if (VSAM_DRV_DEBUG)
         printf("Wait of %f seconds before reading fw version\n",nsec);
-     status = rtems_task_wake_after(nsec);         
-#else
-     taskDelay(nticks);  /* Luchini, changed from 1 tick to 10 on 05/09/01 */
-#endif
+     epicsThreadSleep(nsec);         
      for ( chan=0,ptr=(volatile uint32_t *)pVSAM->data; chan<VSAM_NUM_CHANS; chan++,ptr++ ) { 
-          pcard->fw_version[chan] = in_be32(ptr);
+          pcard->fw_version[chan] = in_be32((volatile void *)ptr);
      }
 
     /* 
      * Reset the MODE CONTROL register to 
      * normal scan, analog data and big-endian mode.
      */
-     out_be32((volatile uint32_t *)&pVSAM->mode_control,0);
+     out_be32((volatile void *)&pVSAM->mode_control,0);
      status = OK;
   
      VSAM_calibrateCheck( pVSAM );
@@ -325,11 +295,7 @@ static int VSAM_calibrateCheck( VSAMMEM *pVSAM )
    int     attempts=0;
    unsigned long val;
    unsigned long calib=0;
-#ifdef __rtems__
    double  nsec = 1.0;
-#else
-  int      nticks=60;
-#endif
 
     /* Dayle added check that it's calibrated and if not, wait for it
        on 03/19/02. 
@@ -337,7 +303,7 @@ static int VSAM_calibrateCheck( VSAMMEM *pVSAM )
        so this code could be removed. dayle 03/29/02
      */     
     /* then the calibration bit is set, so fine */ 
-     val = in_be32((volatile uint32_t *)&pVSAM->status);
+     val = in_be32((volatile void *)&pVSAM->status);
      if ( val & CALIB_SUCCESS ){
         if (VSAM_DRV_DEBUG)  
            printf("Calibration bit is set. Proceed as normal.\n"); 
@@ -345,17 +311,13 @@ static int VSAM_calibrateCheck( VSAMMEM *pVSAM )
      else {
        /* then the calibration bit is not set, so retry */
        for (attempts=0; !calib && (attempts<10); attempts++) {
-	 val= in_be32((volatile uint32_t *)&pVSAM->status);
+	 val= in_be32((volatile void *)&pVSAM->status);
          if (val &= CALIB_SUCCESS){ 
            printf("Calibration: status register = 0x%lx\n",val);
            calib=1;
            status = OK;
 	 }
-#ifdef __rtems__
-           rtems_task_wake_after (nsec);
-#else
-           taskDelay(nticks);
-#endif
+         epicsThreadSleep(nsec);
        }/* End of FOR statement */ 
 
        if (!calib) {
@@ -376,34 +338,26 @@ int VSAM_clear( VSAMMEM *pVSAM )
 {
     int i;
     volatile uint32_t *ptr=NULL;
-#ifdef __rtems__
    double  nsec = 2.0;
-#else
-  int      nticks=120;
-#endif
 
     for (i=0,ptr=(volatile uint32_t *)pVSAM->data; i<32; i++,ptr++) {
-      out_be32(ptr,0);
+      out_be32((volatile void *)ptr,0);
     }
 
     /* There are 32 range values of type char, but they are accessed via A24/D32 address space */
     for (i=0,ptr=(volatile uint32_t *)pVSAM->range ; i<8; i++,ptr++) {
-        out_be32(ptr,0);  
+        out_be32((volatile void *)ptr,0);  
     }
 
     /* There are 32 ac values of type short, but they are accessed via A24/D32 address space */
     for (i=0,ptr=(volatile uint32_t *)pVSAM->ac; i<16; i++,ptr++) {
-        out_be32(ptr,0); 
+        out_be32((volatile void *)ptr,0); 
     }
     /* 2 seconds after a reset valid data is available */
-    out_be32((volatile uint32_t *)&pVSAM->reset,0);
-#ifdef __rtems__
+    out_be32((volatile void *)&pVSAM->reset,0);
      if (VSAM_DRV_DEBUG)
        printf("Wait of %f seconds after reset\n",nsec);
-     rtems_task_wake_after (nsec);
-#else
-    taskDelay(nticks);
-#endif
+     epicsThreadSleep(nsec);
 
     /* 
      * D0: 0= Normal channel scan, 1= Fast scan mode 
@@ -411,13 +365,13 @@ int VSAM_clear( VSAMMEM *pVSAM )
      * D2: 0= Big endian mode, 1= Little endian mode
      * D3: 0= Internal Calibration failed, 1= Internal calibration successful
      */
-    out_be32((volatile uint32_t *)&pVSAM->mode_control,0);
+    out_be32((volatile void *)&pVSAM->mode_control,0);
 
     /* Note: can't zero status register because it's read-only */
-    out_be32((volatile uint32_t *)&pVSAM->pad,0);
-    out_be32((volatile uint32_t *)&pVSAM->diag_mode,0);
+    out_be32((volatile void *)&pVSAM->pad,0);
+    out_be32((volatile void *)&pVSAM->diag_mode,0);
     for (i=0; i<3; i++) {
-        out_be32((volatile uint32_t *)&pVSAM->padding[i],0);
+        out_be32((volatile void *)&pVSAM->padding[i],0);
     } 
     return OK;
 }
@@ -518,7 +472,7 @@ int bo_VSAM_read( short	        card,
 	if (pVSAM == 0)  
            status = ERROR;
         else {
-	  val   = in_be32((volatile uint32_t *)&pVSAM->status);
+	  val   = in_be32((volatile void *)&pVSAM->status);
           *pval = val & mask;
 	}
       }
@@ -640,14 +594,14 @@ int ai_VSAM_read( short	    card,
 	    dfactor = (double)rfloat/(double)AC_DIVISOR;
 
 	    /* now get AC measurement */
-	    rlong  = in_be32((volatile uint32_t *)&pVSAM->ac[ppvt->lchan]);
+	    rlong  = in_be32((volatile void *)&pVSAM->ac[ppvt->lchan]);
 	    rshort = (short)((rlong & ppvt->mask) >> ppvt->shift);
 	    dpp    = dfactor * (double)rshort;
 	    *prval = (float)dpp;
 	    break;
 
 	default:
-	    /* rfloat = (float)in_be32((volatile uint32_t *)&pVSAM->data[channel]); */ /* This line is incorrect?  Dereferencing a float as a uint32_t. */
+	    /* rfloat = (float)in_be32((volatile void *)&pVSAM->data[channel]); */ /* This line is incorrect?  Dereferencing a float as a uint32_t. */
 	    rfloat = pVSAM->data[channel]; /* pVSAM->data[channel] is already a float */
 	    *prval = rfloat; 
 	    break;
@@ -669,7 +623,7 @@ int getVSAMRange( VSAMMEM  *pMem,
                                      0.32,  0.16, 0.08, 0.04, 0.02, 
                                      0.01 };
 
-    rlong = in_be32((volatile uint32_t *) &pMem->range[ppvt->lchan] );
+    rlong = in_be32((volatile void *) &pMem->range[ppvt->lchan] );
     i_range = (char)((rlong & ppvt->mask) >> ppvt->shift);
     if ( i_range>MAX_RANGE_BYTE ) 
       status = -1;
@@ -696,17 +650,17 @@ int input_VSAM_driver( short           card,
     if ( status ==OK ) {
       if (lchan < VSAM_NUM_CHANS) {
 	if (type == RANGE_TYPE) {
-	  lval = in_be32((volatile uint32_t *)&pVSAM->range[lchan]);
+	  lval = in_be32((volatile void *)&pVSAM->range[lchan]);
 	}
 	else if (type == AC_TYPE) {
-	  lval = in_be32( (volatile uint32_t *)&pVSAM->ac[lchan]);
+	  lval = in_be32( (volatile void *)&pVSAM->ac[lchan]);
 	}
 	else {
 	   return(-2);
 	}
       }
       else {
-	  lval = in_be32((volatile uint32_t *)&pVSAM->status);
+	  lval = in_be32((volatile void *)&pVSAM->status);
       }
       *pval = lval & mask;
     }
@@ -732,14 +686,14 @@ int output_VSAM_driver( short		card,
     if ( status ==OK ) {
       switch ((int)channel) {
 	case RESET_CHANNEL:
-	    out_be32((volatile uint32_t *)&pVSAM->reset, 0);
+	    out_be32((volatile void *)&pVSAM->reset, 0);
 	    break;
 	case DIAG_CHANNEL:
-	    out_be32((volatile uint32_t *)&pVSAM->diag_mode,0);
+	    out_be32((volatile void *)&pVSAM->diag_mode,0);
 	    break;
 	default:
 	    /* Only three bits of mode control register are used */
-	    sval = in_be32((volatile uint32_t *)&pVSAM->status);
+	    sval = in_be32((volatile void *)&pVSAM->status);
 	    sval &= MODE_MASK;
 	    rval = *pval;
 	    if (mask == MODE_MASK) lval = rval & mask;	/* multi-bit output */
@@ -747,7 +701,7 @@ int output_VSAM_driver( short		card,
 		if (rval & mask) lval = sval | mask;	/* set single bit */
 		else lval = sval & ~mask;		/* clear single bit */
 	    }
-	    out_be32((volatile uint32_t *)&pVSAM->mode_control,lval);
+	    out_be32((volatile void *)&pVSAM->mode_control,lval);
 	    break;
       }
     }
@@ -788,7 +742,7 @@ long VSAM_io_report( char level )
 	 printf("VSAM:\tcard %hd\tA24: %p\t status: 0x%x\n", 
                  pcard->card, 
                  pcard->pVSAM, 
-                 in_be32((volatile uint32_t *)&pVSAM->status));
+                 in_be32((volatile void *)&pVSAM->status));
       }
     }/* End of FOR loop */
     return OK;
@@ -813,20 +767,20 @@ void VSAM_rval_report( short int card, short int flag )
      pcard = VSAM_getByCard( card );
      if ( pcard && pcard->present ) {
        pVSAM = pcard->pVSAM;
-       printf("STATUS reg: 0x%x\n",in_be32((volatile uint32_t *)&pVSAM->status)); 
+       printf("STATUS reg: 0x%x\n",in_be32((volatile void *)&pVSAM->status)); 
        for (i=0,ptr=(volatile uint32_t *)pVSAM->data; i<VSAM_NUM_CHANS; i++,ptr++)
        {
          if ( flag ) {
            version_frac  = modf((double)pcard->fw_version[i],&version_base); 
-           val = (double)in_be32(ptr);
-	   printf("\tch %2hd: data %e\t firmware ver: %d\n", 
+           val = (double)in_be32((volatile void *)ptr);
+	   printf("\tch %2hd: data %e\t firmware ver: 0x%X\n", 
                   i, 
                   val,
                   (int)version_base);
 	}
 	 else
 	 {
-           val = (double)in_be32(ptr);
+           val = (double)in_be32((volatile void *)ptr);
 	   printf("\tch %2hd: data %e\n",i, val);
 	 }
       }/* End of Channel FOR loop */

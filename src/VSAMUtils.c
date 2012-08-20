@@ -20,13 +20,13 @@ int VSAM_testMem (const VSAMMEM * pVSAM)
     VSAMCHARS c;
 
     for (i=0,paddr=(volatile uint32_t *)pVSAM->data; i<32; i++,paddr++) {
-        fval = (float)in_be32( paddr );
+        fval = (float)in_be32( (volatile void *)paddr );
         printf ("data[%2d]   Addr = %p, Value = %f\n", 
                  i, paddr,fval );
     }
 
     for (i=0,paddr=(volatile uint32_t *)pVSAM->range; i<8; i++,paddr++) {
-        tmpdata = in_be32(paddr);
+        tmpdata = in_be32((volatile void *)paddr);
         c.a = (CHARAMASK & tmpdata); 
         c.b = (CHARBMASK & tmpdata) >> 8; 
         c.c = (CHARCMASK & tmpdata) >> 16; 
@@ -37,7 +37,7 @@ int VSAM_testMem (const VSAMMEM * pVSAM)
 
     }
     for (i=0,paddr=(volatile uint32_t *)pVSAM->ac; i<16; i++,paddr++) {
-        tmpdata = in_be32(paddr);
+        tmpdata = in_be32((volatile void *)paddr);
         s.a = (SHORTAMASK & tmpdata); 
         s.b = (SHORTBMASK & tmpdata) >> 16; 
         printf ("ac[%2d]       Addr = %p, Values = %d, %d\n", 
@@ -58,8 +58,8 @@ int VSAM_testMem (const VSAMMEM * pVSAM)
     printf ("diag_mode    Addr = %p, Value = %lu\n", 
              &pVSAM->diag_mode, pVSAM->diag_mode);
 
-    for (i=0,paddr=pVSAM->padding; i<3; i++,paddr++) {
-        val = in_be32( paddr );
+    for (i=0,paddr=(volatile uint32_t *)pVSAM->padding; i<3; i++,paddr++) {
+        val = in_be32( (volatile void *)paddr );
         printf ("padding[%1d]   Addr = %p, Value = %lu\n", 
             i, paddr, val);
     }
