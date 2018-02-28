@@ -31,6 +31,8 @@
 #
 #==============================================================
 #
+R2.3.0:  New folder structure to look more like an EPICS module and Git Workflow.
+
 vsam-R2-2-2:   Correct bugs in RTEMS delays at init time.
 
 vsam-R2-2-1:   Build with vmeCardRecord-R2-2-1 and miscUtils-R2-2-2
