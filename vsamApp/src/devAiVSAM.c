@@ -14,9 +14,7 @@
 #include	<recSup.h>
 #include	<devSup.h>
 #include        <recGbl.h>
-#if (EPICS_REVISION == 14 && EPICS_MODIFICATION >= 11)
-#include  "errlog.h"
-#endif
+#include  	"errlog.h"
 #include	<link.h>
 #include        <devLib.h>         /* for S_dev_noMemory */
 #include	<aiRecord.h>
@@ -124,7 +122,6 @@ static long init_record(struct aiRecord	*pai)
 
 }
 
-
 static long read_ai(struct aiRecord  *pai)
 {
 	float         value;
