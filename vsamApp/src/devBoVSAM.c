@@ -17,10 +17,11 @@
 
 
 /* Local prototypes */
-static long init_record(struct boRecord *pbo);
+static long init_record(struct dbCommon *pbo);
 static long write_bo(struct boRecord *pbo);
 
 /* Global variables */
+#ifndef USE_TYPED_DSET
 struct {
 	long		number;
 	DEVSUPFUN	report;
@@ -35,12 +36,25 @@ struct {
 	init_record,
 	NULL,
 	write_bo};
+#else
+struct {
+        dset            common;
+        long(*write_bo)(struct boRecord *prec);
+} devBoVSAM={
+	{5,
+	NULL,
+	NULL,
+	init_record,
+	NULL},
+	write_bo};
+#endif
 
 epicsExportAddress(dset, devBoVSAM);
 
 
-static long init_record(struct boRecord	*pbo)
+static long init_record(struct dbCommon *prec)
 {
+    struct boRecord *pbo = (struct boRecord *)prec;
     unsigned long  value, mask;
     struct vmeio  *pvmeio;
     int            status = S_db_badField;

@@ -42,14 +42,16 @@
 
 
 /* Local Prototypes */
-static long devCardVSAM_init( void *rec_p );
-static long devCardVSAM_read( void *rec_p );
+static long devCardVSAM_init( struct dbCommon *rec_p );
+static long devCardVSAM_read( struct dbCommon *rec_p );
 
 
 /* 
  * GLOBAL strucuture
  * Device support entry table 
  */
+
+#ifndef USE_TYPE_DSET
 struct {
   long	     number;        
   DEVSUPFUN  report;  
@@ -58,6 +60,12 @@ struct {
   DEVSUPFUN  get_ioint_info; 
   DEVSUPFUN  read;            
 }devCardVSAM = { 5,NULL,NULL, devCardVSAM_init,NULL, devCardVSAM_read };
+#else
+struct {
+  dset       common;
+  long(*read)(struct dbCommon *prec);
+} devCardVSAM = { {5,NULL,NULL, devCardVSAM_init,NULL}, devCardVSAM_read };
+#endif
 
 epicsExportAddress(dset, devCardVSAM);
  
@@ -88,7 +96,7 @@ epicsExportAddress(dset, devCardVSAM);
          S_db_badChoice   - Failure, due to FTVL field not set to FLOAT
 
 =============================================================*/
-static long devCardVSAM_init( void *rec_p )
+static long devCardVSAM_init( struct dbCommon *rec_p )
 {  
    long                   status=OK;    /* return status         */
    struct vmeCardRecord  *modu_ps;     /* waveformrecord info   */
@@ -167,7 +175,7 @@ static long devCardVSAM_init( void *rec_p )
             Otherwise, see return from 
 
 =============================================================*/
-static long  devCardVSAM_read( void *rec_p )
+static long  devCardVSAM_read( struct dbCommon *rec_p )
 {
     long                  status=OK;                /* return status        */ 
     long                  sev;                      /* increased severity   */

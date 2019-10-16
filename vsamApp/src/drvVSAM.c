@@ -46,11 +46,16 @@ static VSAM_ID VSAM_getByAddr( unsigned long baseAddr );
 /* Global variables        */
 /* VSAM driver entry table */
 
+#ifndef USE_TYPED_DRVET
 struct {
 	long		number;
 	DRVSUPFUN	report;
 	DRVSUPFUN	init;
 } drvVSAM={2,report,init};
+#else
+drvet drvVSAM = {2, report, init};
+#endif
+
 epicsExportAddress(drvet,drvVSAM);
 
 

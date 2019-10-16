@@ -22,12 +22,13 @@
 #include        <epicsExport.h>
 
 /* Local prototypes */
-static long init_record(struct aiRecord *pai);
+static long init_record(struct dbCommon *rec);
 static long read_ai(struct aiRecord *pai);
 static long special_linconv(struct aiRecord *pai, int after);
 static void aiVSAMconvert(struct aiRecord  *pai, float rval);
 
 /* Global variables */
+#ifndef USE_TYPE_DSET
 struct {
 	long		number;
 	DEVSUPFUN	report;
@@ -44,7 +45,22 @@ struct {
 	NULL,
 	read_ai,
 	special_linconv};
+#else
+struct {
+        dset            common;
+        long(*read_ai)(struct aiRecord *prec);
+        long(*special_linconv)(struct aiRecord *prec, int after);
+} devAiVSAM={
+	{6,
+	NULL,
+	NULL,
+	init_record,
+	NULL,
+	read_ai},
+	special_linconv};
+#endif
 
+#ifndef USE_TYPED_DSET
 struct {
 	long		number;
 	DEVSUPFUN	report;
@@ -59,12 +75,25 @@ struct {
 	init_record,
 	NULL,
 	read_ai};
+#else
+struct {
+        dset            common;
+        long(*read_ai)(struct aiRecord *prec);
+} devAiSIAM={
+	{5,
+	NULL,
+	NULL,
+	init_record,
+	NULL},
+	read_ai};
+#endif
 
 epicsExportAddress(dset, devAiSIAM);
 epicsExportAddress(dset, devAiVSAM);
 
-static long init_record(struct aiRecord	*pai)
+static long init_record(struct dbCommon	*prec)
 {
+        struct aiRecord *pai = (struct aiRecord *)prec;
 	struct vmeio   *pvmeio;
 	VSAMPVT        *ppvt;
         long            status = S_db_badField;

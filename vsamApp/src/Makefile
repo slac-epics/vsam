@@ -3,7 +3,7 @@ TOP=../..
 include $(TOP)/configure/CONFIG
 #----------------------------------------
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
-
+USR_CFLAGS += -DUSE_TYPED_RSET -DUSE_TYPED_DSET -DUSE_TYPED_DRVET
 # Install database definition files
 DBD += devVSAMCard.dbd
 DBD += devVSAM.dbd

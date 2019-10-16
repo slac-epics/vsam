@@ -16,10 +16,11 @@
 #include        <epicsExport.h>
 
 /* Local prototypes */
-static long init_record(struct biRecord *pbi);
+static long init_record(struct dbCommon *prec);
 static long read_bi(struct biRecord *pbi);
 
 /* Global variables */
+#ifndef USE_TYPED_DSET
 struct {
 	long		number;
 	DEVSUPFUN	report;
@@ -34,12 +35,25 @@ struct {
 	init_record,
 	NULL,
 	read_bi};
+#else
+struct {
+        dset            common;
+        long(*read_bi)(struct biRecord *prec);
+} devBiVSAM={
+	{5,
+	NULL,
+	NULL,
+	init_record,
+	NULL},
+	read_bi};
+#endif
 
 epicsExportAddress(dset, devBiVSAM);
 
 
-static long init_record(struct biRecord	*pbi)
+static long init_record(struct dbCommon	*prec)
 {
+    struct biRecord *pbi = (struct biRecord *) prec;
     unsigned long  mask;
     struct vmeio  *pvmeio;
     int            status = S_db_badField;
