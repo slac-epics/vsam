@@ -20,7 +20,7 @@
 # could match a directory name.
 # ==========================================================
 MISCUTILS_MODULE_VERSION=R2.2.5
-VME_CARD_RECORD_MODULE_VERSION=R2.3.0
+VME_CARD_RECORD_MODULE_VERSION=R2.3.1
 
 # ==========================================================
 # Define module paths using pattern
